@@ -24,7 +24,7 @@
     <DelaySign>false</DelaySign>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+<!--    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>-->
   </PropertyGroup>
   
   <ItemGroup>
