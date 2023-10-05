@@ -1,0 +1,50 @@
+<Project>
+    <PropertyGroup>
+        <Title>EFCore.BulkExtensions.MIT</Title>
+        <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
+        <!--        <Version>6.6.5</Version>-->
+        <Nullable>enable</Nullable>
+        <!--        <Authors>borisdj</Authors>-->
+        <Description>EntityFramework EF Core Bulk Batch Extensions for Insert Update Delete Read (CRUD) operations on SQL Server, PostgreSQL, MySQL, SQLite</Description>
+        <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions</PackageProjectUrl>
+        <PackageIcon>EFCoreBulk.png</PackageIcon>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>EntityFrameworkCore Entity Framework Core EFCore EF Core SQL Server PostgreSQL MySQL SQLite Bulk Batch Extensions Insert Update Delete Read Truncate SaveChanges</PackageTags>
+        <RepositoryUrl>https://github.com/videokojot/EFCore.BulkExtensions</RepositoryUrl>
+        <RepositoryType>Git</RepositoryType>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+        <!--        <AssemblyVersion>6.6.5.0</AssemblyVersion>-->
+        <!--        <FileVersion>6.6.5.0</FileVersion>-->
+        <!--        <SignAssembly>true</SignAssembly>-->
+        <!--        <AssemblyOriginatorKeyFile>..\Keys\EFCore.BulkExtensions.snk</AssemblyOriginatorKeyFile>-->
+        <!--        <DelaySign>false</DelaySign>-->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>latest</LangVersion>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\EFCoreBulk.png" PackagePath="" Pack="True"/>
+    </ItemGroup>
+
+    <!--    <ItemGroup>-->
+    <!--        <None Remove="EFCoreBulk.png" />-->
+    <!--    </ItemGroup>-->
+    <ItemGroup>
+        <None Include="..\..\README.md" PackagePath="" Pack="True"/>
+        <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE"/>
+    </ItemGroup>
+    <!--    <ItemGroup>-->
+    <!--        <EmbeddedResource Include="EFCoreBulk.png" PackagePath="">-->
+    <!--            <Pack>True</Pack>-->
+    <!--        </EmbeddedResource>-->
+    <!--    </ItemGroup>-->
+</Project>

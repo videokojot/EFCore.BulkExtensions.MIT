@@ -15,6 +15,34 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SQLit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions", "EFCore.BulkExtensions\EFCore.BulkExtensions.csproj", "{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v7", "NugetProjects\EFCore.BulkExtensions.v7\EFCore.BulkExtensions.v7.csproj", "{2220BF27-BD2E-4309-A419-49229EC6E3C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v8", "NugetProjects\EFCore.BulkExtensions.v8\EFCore.BulkExtensions.v8.csproj", "{926B6875-9641-4273-8A31-092527B5DFCD}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedProject1", "SharedProject1\SharedProject1.shproj", "{F8A5492F-937D-415D-91AC-F521B4EB8CD6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{214076BE-7DD8-4AFB-8B34-299A1D5DCB3C}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		EFCoreBulk2.png = EFCoreBulk2.png
+		EFCoreBulk.png = EFCoreBulk.png
+		NugetsReleasePaths.txt = NugetsReleasePaths.txt
+		README.md = README.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		CopyFilesPerProviderNugets.bat = CopyFilesPerProviderNugets.bat
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		.gitignore = .gitignore
+		.editorconfig = .editorconfig
+		global.json = global.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v6", "NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj", "{1B05F4A5-0335-401F-8ADF-8734155ACC7B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NugetProjects", "NugetProjects", "{498FB27E-CE77-415B-B59A-5F271F876F5D}"
+	ProjectSection(SolutionItems) = preProject
+		NugetProjects\Directory.Build.props = NugetProjects\Directory.Build.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,11 +73,28 @@ Global
 		{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2220BF27-BD2E-4309-A419-49229EC6E3C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2220BF27-BD2E-4309-A419-49229EC6E3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2220BF27-BD2E-4309-A419-49229EC6E3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2220BF27-BD2E-4309-A419-49229EC6E3C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{926B6875-9641-4273-8A31-092527B5DFCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{926B6875-9641-4273-8A31-092527B5DFCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{926B6875-9641-4273-8A31-092527B5DFCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{926B6875-9641-4273-8A31-092527B5DFCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F6CFFD1D-D456-4A8F-86FC-7CF2C893AB08}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1B05F4A5-0335-401F-8ADF-8734155ACC7B} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{2220BF27-BD2E-4309-A419-49229EC6E3C7} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{926B6875-9641-4273-8A31-092527B5DFCD} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 	EndGlobalSection
 EndGlobal
