@@ -5,15 +5,17 @@ VisualStudioVersion = 17.4.32804.182
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.Tests", "EFCore.BulkExtensions.Tests\EFCore.BulkExtensions.Tests.csproj", "{2328B243-982C-47B7-885B-999231149C72}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SqlServer", "EFCore.BulkExtensions.SqlServer\EFCore.BulkExtensions.SqlServer.csproj", "{2A68508D-9E8F-4996-A11D-94AFB313D9C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SqlServer", "NugetProjects\EFCore.BulkExtensions.SqlServer\EFCore.BulkExtensions.SqlServer.csproj", "{2A68508D-9E8F-4996-A11D-94AFB313D9C6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.MySql", "EFCore.BulkExtensions.MySql\EFCore.BulkExtensions.MySql.csproj", "{A3A22BB6-D230-4079-AA84-20FB380D5C40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.MySql", "NugetProjects\EFCore.BulkExtensions.MySql\EFCore.BulkExtensions.MySql.csproj", "{A3A22BB6-D230-4079-AA84-20FB380D5C40}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.PostgreSql", "EFCore.BulkExtensions.PostgreSql\EFCore.BulkExtensions.PostgreSql.csproj", "{5C539532-9885-4E10-B1F3-4AD04EC54904}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.PostgreSql", "NugetProjects\EFCore.BulkExtensions.PostgreSql\EFCore.BulkExtensions.PostgreSql.csproj", "{5C539532-9885-4E10-B1F3-4AD04EC54904}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SQLite", "EFCore.BulkExtensions.SQLite\EFCore.BulkExtensions.SQLite.csproj", "{2A416BCF-642B-4BAF-94FE-5C165E63860C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SQLite", "NugetProjects\EFCore.BulkExtensions.SQLite\EFCore.BulkExtensions.SQLite.csproj", "{2A416BCF-642B-4BAF-94FE-5C165E63860C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions", "EFCore.BulkExtensions\EFCore.BulkExtensions.csproj", "{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v6", "NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj", "{1B05F4A5-0335-401F-8ADF-8734155ACC7B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v7", "NugetProjects\EFCore.BulkExtensions.v7\EFCore.BulkExtensions.v7.csproj", "{2220BF27-BD2E-4309-A419-49229EC6E3C7}"
 EndProject
@@ -35,8 +37,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{214076BE
 		.editorconfig = .editorconfig
 		global.json = global.json
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v6", "NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj", "{1B05F4A5-0335-401F-8ADF-8734155ACC7B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NugetProjects", "NugetProjects", "{498FB27E-CE77-415B-B59A-5F271F876F5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -96,5 +96,9 @@ Global
 		{1B05F4A5-0335-401F-8ADF-8734155ACC7B} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 		{2220BF27-BD2E-4309-A419-49229EC6E3C7} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 		{926B6875-9641-4273-8A31-092527B5DFCD} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{A3A22BB6-D230-4079-AA84-20FB380D5C40} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{5C539532-9885-4E10-B1F3-4AD04EC54904} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{2A416BCF-642B-4BAF-94FE-5C165E63860C} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{2A68508D-9E8F-4996-A11D-94AFB313D9C6} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 	EndGlobalSection
 EndGlobal

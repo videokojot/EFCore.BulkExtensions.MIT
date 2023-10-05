@@ -1,6 +1,7 @@
 <Project>
     <PropertyGroup>
-        <Title>EFCore.BulkExtensions.MIT</Title>
+<!--        <Title>EFCore.BulkExtensions.MIT</Title>-->
+        <Title>videkojot.TestPackage</Title>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <!--        <Version>6.6.5</Version>-->
         <Nullable>enable</Nullable>

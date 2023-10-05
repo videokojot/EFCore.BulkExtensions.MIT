@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+<!-- Do not pack     -->
+    <IsPackable>false</IsPackable>
     <TargetFramework>net6.0</TargetFramework>
-    <Title>EFCore.BulkExtensions</Title>
+    <Title>videkojot.TestPackage</Title>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Version>6.6.4</Version>
 	<Nullable>enable</Nullable>	  
