@@ -5,7 +5,7 @@
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <!--        <Version>6.6.5</Version>-->
         <Nullable>enable</Nullable>
-        <!--        <Authors>borisdj</Authors>-->
+        <Authors>videokojot</Authors>
         <Description>EntityFramework EF Core Bulk Batch Extensions for Insert Update Delete Read (CRUD) operations on SQL Server, PostgreSQL, MySQL, SQLite</Description>
         <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions</PackageProjectUrl>
         <PackageIcon>EFCoreBulk.png</PackageIcon>
@@ -23,6 +23,14 @@
         <LangVersion>latest</LangVersion>
 <!--        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>-->
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <EnablePackageValidation>true</EnablePackageValidation>
+
+        <!-- Optional: Detect breaking changes from a previous version -->
+        <!-- <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion> -->
     </PropertyGroup>
 
     <ItemGroup>
