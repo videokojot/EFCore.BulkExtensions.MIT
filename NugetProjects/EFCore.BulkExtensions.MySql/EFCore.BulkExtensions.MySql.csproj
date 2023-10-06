@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-      <TargetFramework>net6.0</TargetFramework>
-      <Title>$(NoWarn).MySQL</Title>
-      <Version>6.6.5</Version>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Title>$(Title).MySQL</Title>
+        <PackageId>$(BasePackageId).MySQL</PackageId>
+        <Version>6.$(BaseVersion)</Version>
+    </PropertyGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="EntityFrameworkCore.SqlServer.HierarchyId" Version="3.0.1" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="6.0.11" />
-      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2" />
-  </ItemGroup>
-    
+    <ItemGroup>
+        <PackageReference Include="EntityFrameworkCore.SqlServer.HierarchyId" Version="3.0.1"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="6.0.11"/>
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"/>
+    </ItemGroup>
+
 </Project>

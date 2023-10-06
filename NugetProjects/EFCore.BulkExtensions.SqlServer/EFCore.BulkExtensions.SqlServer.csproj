@@ -2,8 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <Title>$(NoWarn).SqlServer</Title>
-        <Version>6.6.5</Version>
+        <Title>$(Title).SQLite</Title>
+        <PackageId>$(BasePackageId).SqlServer</PackageId>
+        <Version>6.$(BaseVersion)</Version>
     </PropertyGroup>
 
     <ItemGroup>

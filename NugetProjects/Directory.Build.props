@@ -2,10 +2,12 @@
     <PropertyGroup>
 <!--        <Title>EFCore.BulkExtensions.MIT</Title>-->
         <Title>videkojot.TestPackage</Title>
+        <PackageId>ToBeOverridenInChildProject</PackageId>
+        <BasePackageId>videkojot.TestPackage</BasePackageId>
+        <BaseVersion>6.5</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
-        <!--        <Version>6.6.5</Version>-->
         <Nullable>enable</Nullable>
-        <Authors>videokojot</Authors>
+        <Authors>borisdj, cincibuch</Authors>
         <Description>EntityFramework EF Core Bulk Batch Extensions for Insert Update Delete Read (CRUD) operations on SQL Server, PostgreSQL, MySQL, SQLite</Description>
         <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions</PackageProjectUrl>
         <PackageIcon>EFCoreBulk.png</PackageIcon>
