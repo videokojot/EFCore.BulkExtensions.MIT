@@ -13,15 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.Postg
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions.SQLite", "NugetProjects\EFCore.BulkExtensions.SQLite\EFCore.BulkExtensions.SQLite.csproj", "{2A416BCF-642B-4BAF-94FE-5C165E63860C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EFCore.BulkExtensions", "EFCore.BulkExtensions\EFCore.BulkExtensions.csproj", "{6796CE3B-B8AA-4F6E-ADAE-DDA86CF79882}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v6", "NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj", "{1B05F4A5-0335-401F-8ADF-8734155ACC7B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v7", "NugetProjects\EFCore.BulkExtensions.v7\EFCore.BulkExtensions.v7.csproj", "{2220BF27-BD2E-4309-A419-49229EC6E3C7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v8", "NugetProjects\EFCore.BulkExtensions.v8\EFCore.BulkExtensions.v8.csproj", "{926B6875-9641-4273-8A31-092527B5DFCD}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedProject1", "SharedProject1\SharedProject1.shproj", "{F8A5492F-937D-415D-91AC-F521B4EB8CD6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{214076BE-7DD8-4AFB-8B34-299A1D5DCB3C}"
 	ProjectSection(SolutionItems) = preProject
@@ -42,6 +38,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NugetProjects", "NugetProje
 	ProjectSection(SolutionItems) = preProject
 		NugetProjects\Directory.Build.props = NugetProjects\Directory.Build.props
 	EndProjectSection
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EFCore.BulkExtensions", "EFCore.BulkExtensions\EFCore.BulkExtensions.shproj", "{30FCCEF4-412F-4988-BE6F-88ACEC5C74BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v6.Tests", "Tests\EFCore.BulkExtensions.v6.Tests\EFCore.BulkExtensions.v6.Tests.csproj", "{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{61E16CEC-3789-4450-A761-3BCE541CC0D9}"
+	ProjectSection(SolutionItems) = preProject
+		Tests\Directory.Build.props = Tests\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v7.Tests", "Tests\EFCore.BulkExtensions.v7.Tests\EFCore.BulkExtensions.v7.Tests.csproj", "{24700A2E-D5F5-4346-A859-FF17F80BE9BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v8.Tests", "Tests\EFCore.BulkExtensions.v8.Tests\EFCore.BulkExtensions.v8.Tests.csproj", "{D0CABA2A-E43B-40F9-94FA-34FD522CA619}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +94,18 @@ Global
 		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B05F4A5-0335-401F-8ADF-8734155ACC7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24700A2E-D5F5-4346-A859-FF17F80BE9BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24700A2E-D5F5-4346-A859-FF17F80BE9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24700A2E-D5F5-4346-A859-FF17F80BE9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24700A2E-D5F5-4346-A859-FF17F80BE9BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0CABA2A-E43B-40F9-94FA-34FD522CA619}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0CABA2A-E43B-40F9-94FA-34FD522CA619}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0CABA2A-E43B-40F9-94FA-34FD522CA619}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0CABA2A-E43B-40F9-94FA-34FD522CA619}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -100,5 +121,8 @@ Global
 		{5C539532-9885-4E10-B1F3-4AD04EC54904} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 		{2A416BCF-642B-4BAF-94FE-5C165E63860C} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
 		{2A68508D-9E8F-4996-A11D-94AFB313D9C6} = {498FB27E-CE77-415B-B59A-5F271F876F5D}
+		{7EE50CBE-99AD-4D2A-BFC6-DCBCDF7D5913} = {61E16CEC-3789-4450-A761-3BCE541CC0D9}
+		{24700A2E-D5F5-4346-A859-FF17F80BE9BC} = {61E16CEC-3789-4450-A761-3BCE541CC0D9}
+		{D0CABA2A-E43B-40F9-94FA-34FD522CA619} = {61E16CEC-3789-4450-A761-3BCE541CC0D9}
 	EndGlobalSection
 EndGlobal

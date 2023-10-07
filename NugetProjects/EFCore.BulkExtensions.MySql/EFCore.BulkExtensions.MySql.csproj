@@ -13,4 +13,15 @@
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"/>
     </ItemGroup>
 
+    <PropertyGroup>
+        <DefaultItemExcludes>$(DefaultItemExcludes);**\SqlAdapters\PostgreSql\**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);SqlAdapters\SQLite\**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);SqlAdapters\SqlServer\**</DefaultItemExcludes>
+        <DefaultItemExcludes>$(DefaultItemExcludes);SqlAdapters\MySql\**</DefaultItemExcludes>
+    </PropertyGroup>
+
+
+
+
+
 </Project>

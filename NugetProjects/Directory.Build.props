@@ -1,6 +1,6 @@
 <Project>
     <PropertyGroup>
-<!--        <Title>EFCore.BulkExtensions.MIT</Title>-->
+        <!--        <Title>EFCore.BulkExtensions.MIT</Title>-->
         <Title>videkojot.TestPackage</Title>
         <PackageId>ToBeOverridenInChildProject</PackageId>
         <BasePackageId>videkojot.TestPackage</BasePackageId>
@@ -23,10 +23,38 @@
         <!--        <DelaySign>false</DelaySign>-->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>latest</LangVersion>
-<!--        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>-->
+        <!--        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>-->
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
+
+    <!--    Add whole core lib -->
+    <Import Project="..\EFCore.BulkExtensions\EFCore.BulkExtensions.projitems" Label="Shared"/>
+
+    <!--    Exlude specific folders for single provider packages -->
+    <ItemGroup Condition="$(MSBuildProjectName.Contains('MySql'))">
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="$(MSBuildProjectName.Contains('PostgreSql'))">
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="$(MSBuildProjectName.Contains('SQLite'))">
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="$(MSBuildProjectName.Contains('SqlServer'))">
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+    </ItemGroup>
 
     <PropertyGroup>
         <EnablePackageValidation>true</EnablePackageValidation>
@@ -34,6 +62,7 @@
         <!-- Optional: Detect breaking changes from a previous version -->
         <!-- <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion> -->
     </PropertyGroup>
+
 
     <ItemGroup>
         <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
@@ -58,4 +87,6 @@
     <!--            <Pack>True</Pack>-->
     <!--        </EmbeddedResource>-->
     <!--    </ItemGroup>-->
+
+
 </Project>

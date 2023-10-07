@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>0812D061-7ADD-467E-8BA2-9085228E2084</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>EFCore.BulkExtensions</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ActivitySources.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BatchUpdateCreateBodyData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BatchUtil.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BulkConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkTransaction.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkTransactionGraphUtil.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkTransactionSaveChanges.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DbContextUnderlyingExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FastProperty.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GraphUtil.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\GenericsHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)InvalidBulkConfigException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IQueryableBatchExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IQueryableExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OwnedTypeUtil.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SpanSplitExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\IDbServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\ISqlDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\ISqlOperationsAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\MySql\MySqlAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\MySql\MySqlDbServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\MySql\MySqlDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\MySql\SqlQueryBuilderMySql.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\PostgreSql\PostgreSqlAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\PostgreSql\PostgreSqlDbServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\PostgreSql\PostgreSqlDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\PostgreSql\SqlQueryBuilderPostgreSql.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\ProgressHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\QueryBuilderExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlAdaptersMapping.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlDefaultDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SQLite\SqLiteAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SQLite\SqLiteDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SQLite\SqlLiteDbServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SQLite\SqlQueryBuilderSqlite.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlServer\SqlQueryBuilderSqlServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlServer\SqlServerAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlServer\SqlServerDbServer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlAdapters\SqlServer\SqlServerDialect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlBulkOperation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqlQueryBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TableInfo.cs" />
+  </ItemGroup>
+</Project>
