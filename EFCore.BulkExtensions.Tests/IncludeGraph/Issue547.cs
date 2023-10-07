@@ -13,14 +13,18 @@ namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 public class RootEntity
 {
     public int Id { get; set; }
+
     public OwnedType Owned { get; set; } = null!;
+
     public OwnedInSeparateTable OwnedInSeparateTable { get; set; } = null!;
 }
 
 public class OwnedType
 {
     public int? ChildId { get; set; }
+
     public ChildEntity Child { get; set; } = null!;
+
     public string Field1 { get; set; } = null!;
 }
 
@@ -32,6 +36,7 @@ public class OwnedInSeparateTable
 public class ChildEntity
 {
     public int Id { get; set; }
+
     public string Name { get; set; } = null!;
 }
 
@@ -56,10 +61,7 @@ public class Issue547DbContext : DbContext
                 own.Property(y => y.Field1).HasMaxLength(50);
             });
 
-            cfg.OwnsOne(y => y.OwnedInSeparateTable, own =>
-            {
-                own.ToTable(nameof(OwnedInSeparateTable));
-            });
+            cfg.OwnsOne(y => y.OwnedInSeparateTable, own => { own.ToTable(nameof(OwnedInSeparateTable)); });
         });
 
         modelBuilder.Entity<ChildEntity>(cfg =>
@@ -72,7 +74,11 @@ public class Issue547DbContext : DbContext
 
 public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
-    [Theory]
+#if V6
+        [Theory]
+#else
+    [Theory(Skip = "Throws: System.Data.SqlTypes.SqlNullValueException : Data is Null. This method or property cannot be called on Null values.")]
+    #endif
     [InlineData(DbServerType.SQLServer)]
     public async Task Test(DbServerType dbServer)
     {
@@ -83,7 +89,8 @@ public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 
         var tranches = new List<RootEntity>
         {
-            new RootEntity {
+            new RootEntity
+            {
                 Id = 1,
                 Owned = new OwnedType
                 {
@@ -95,7 +102,8 @@ public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
                     Flowers = "Roses"
                 }
             },
-            new RootEntity {
+            new RootEntity
+            {
                 Id = 2,
                 Owned = new OwnedType
                 {
@@ -120,9 +128,9 @@ public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
         }
 
         var rootEntities = await db.RootEntities
-            .Include(y => y.OwnedInSeparateTable)
-            .Include(y => y.Owned.Child)
-            .ToListAsync();
+                                   .Include(y => y.OwnedInSeparateTable)
+                                   .Include(y => y.Owned.Child)
+                                   .ToListAsync();
 
         foreach (var re in rootEntities)
         {
@@ -132,7 +140,7 @@ public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
             Assert.NotNull(re.Owned.ChildId);
             Assert.NotNull(re.Owned.Child);
             Assert.NotEmpty(re.Owned.Child.Name);
-            
+
             Assert.NotNull(re.OwnedInSeparateTable);
             Assert.NotEmpty(re.OwnedInSeparateTable.Flowers);
         }

@@ -89,6 +89,7 @@ public class DbAssemblyFixture : IDisposable
             {
                 var builder = new SqlConnectionStringBuilder(msSqlContainer.GetConnectionString());
                 builder.InitialCatalog = databaseName;
+                builder.MultipleActiveResultSets = true;
 
                 return builder.ToString();
             }

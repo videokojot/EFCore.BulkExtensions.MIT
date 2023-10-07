@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
+        <DefineConstants>$(DefineConstants);V8</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

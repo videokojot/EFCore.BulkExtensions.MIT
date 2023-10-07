@@ -18,7 +18,7 @@ public class EFCoreBulkTestAsync : IAssemblyFixture<DbAssemblyFixture>
 
     private static readonly Func<TestContext, int> ItemsCountQuery = EF.CompileQuery<TestContext, int>(ctx => ctx.Items.Count());
     private static readonly Func<TestContext, Item?> LastItemQuery = EF.CompileQuery<TestContext, Item?>(ctx => ctx.Items.LastOrDefault());
-    private static readonly Func<TestContext, IEnumerable<Item>> AllItemsQuery = EF.CompileQuery<TestContext, IEnumerable<Item>>(ctx => ctx.Items.AsNoTracking());
+    private static  IEnumerable<Item> AllItemsQuery(TestContext ctx) =>  ctx.Items.AsNoTracking();
 
     [Theory]
     [InlineData(DbServerType.SQLServer, true)]
