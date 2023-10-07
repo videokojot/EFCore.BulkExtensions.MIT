@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="xunit.assemblyfixture" Version="2.2.0" />
+        <PackageReference Include="xunit.assemblyfixture" Version="2.2.0"/>
 
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0"/>
@@ -35,7 +35,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj" />
+        <ProjectReference Include="..\NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v6.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -46,5 +46,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+
+    <PropertyGroup>
+        <IsTestProject>false</IsTestProject>
+    </PropertyGroup>
 
 </Project>

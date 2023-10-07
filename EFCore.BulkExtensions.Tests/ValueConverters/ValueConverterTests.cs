@@ -7,7 +7,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.ValueConverters;
 
-public class ValueConverterTests: IDisposable
+public class ValueConverterTests: IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]
