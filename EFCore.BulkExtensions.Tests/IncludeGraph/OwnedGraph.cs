@@ -110,8 +110,8 @@ public class OwnedGraph : IDisposable
         Assert.NotNull(firstLoaded);
         Assert.NotNull(secondLoaded);
 
-        Assert.Equal(first.Component.Items.Count, firstLoaded.Component.Items.Count);
-        Assert.Equal(second.Component.Items.Count, secondLoaded.Component.Items.Count);
+        Assert.Equal(first.Component.Items.Count, firstLoaded!.Component.Items.Count);
+        Assert.Equal(second.Component.Items.Count, secondLoaded!.Component.Items.Count);
         Assert.Equal("a", firstLoaded.Component.Items[0].Value);
         Assert.Equal("b", firstLoaded.Component.Items[1].Value);
         Assert.Equal("c", secondLoaded.Component.Items[0].Value);

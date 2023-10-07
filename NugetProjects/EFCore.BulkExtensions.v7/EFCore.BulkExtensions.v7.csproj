@@ -21,6 +21,4 @@
         <PackageReference Include="StrongNamer" Version="0.2.5"/>
     </ItemGroup>
 
-    <Import Project="..\..\SharedProject1\SharedProject1.projitems" Label="Shared"/>
-
 </Project>

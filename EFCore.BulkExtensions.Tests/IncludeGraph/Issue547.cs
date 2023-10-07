@@ -70,7 +70,7 @@ public class Issue547DbContext : DbContext
     }
 }
 
-public class Issue547 : IDisposable
+public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

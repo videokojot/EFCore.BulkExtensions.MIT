@@ -10,7 +10,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkUnderlyingTest
+public class EFCoreBulkUnderlyingTest : IAssemblyFixture<DbAssemblyFixture>
 {
     protected static int EntitiesNumber => 1000;
 

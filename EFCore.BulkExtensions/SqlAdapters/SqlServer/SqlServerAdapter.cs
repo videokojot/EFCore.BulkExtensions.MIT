@@ -154,7 +154,7 @@ public class SqlOperationsServerAdapter: ISqlOperationsAdapter
             }
             else
             {
-                context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
+                    context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
             }
 
             if (tableInfo.TimeStampColumnName != null)

@@ -3,10 +3,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <NoWarn>$(NoWarn);CA2007;EF1002</NoWarn>
     </PropertyGroup>
 
 
     <ItemGroup>
+        <PackageReference Include="xunit.assemblyfixture" Version="2.2.0" />
+        
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0"/>
 
@@ -15,8 +18,11 @@
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.5.0"/>
         <PackageReference Include="Testcontainers.MySql" Version="3.5.0"/>
 
+        <PackageReference Include="RT.Comb" Version="3.0.0"/>
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.3"/>
+
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0"/>
-        <PackageReference Include="xunit" Version="2.4.1"/>
+        <PackageReference Include="xunit" Version="2.4.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
@@ -26,4 +32,21 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
     </ItemGroup>
+
+
+    <ItemGroup>
+        <Compile Include="..\..\EFCore.BulkExtensions.Tests\**\*.cs"/>
+        
+        <None Include="..\..\EFCore.BulkExtensions.Tests\**\*.json"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions.Tests\bin\**"/>
+        <Compile Remove="..\..\EFCore.BulkExtensions.Tests\obj\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="..\..\EFCore.BulkExtensions.Tests\testsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>testsettings.json</Link>
+        </None>
+    </ItemGroup>
+    
 </Project>

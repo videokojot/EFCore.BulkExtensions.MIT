@@ -8,7 +8,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTestSaveChanges
+public class EFCoreBulkTestSaveChanges : IAssemblyFixture<DbAssemblyFixture>
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

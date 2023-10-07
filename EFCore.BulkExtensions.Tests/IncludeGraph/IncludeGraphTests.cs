@@ -10,7 +10,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 
-public class IncludeGraphTests : IDisposable
+public class IncludeGraphTests : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
     private readonly static WorkOrder WorkOrder1 = new ()
     {

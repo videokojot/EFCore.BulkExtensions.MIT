@@ -9,7 +9,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBatchTest
+public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
 {
     protected static int EntitiesNumber => 1000;
 

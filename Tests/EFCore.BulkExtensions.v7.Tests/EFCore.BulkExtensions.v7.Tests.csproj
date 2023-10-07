@@ -5,7 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v6\EFCore.BulkExtensions.v7.csproj" />
+      <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v7\EFCore.BulkExtensions.v7.csproj" />
     </ItemGroup>
 
 </Project>
