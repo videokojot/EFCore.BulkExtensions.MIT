@@ -2,11 +2,10 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <DefineConstants>$(DefineConstants);V8</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v8\EFCore.BulkExtensions.v8.csproj" />
+        <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v8\EFCore.BulkExtensions.v8.csproj"/>
     </ItemGroup>
 
 </Project>

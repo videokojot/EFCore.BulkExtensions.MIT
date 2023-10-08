@@ -1,9 +1,8 @@
 <Project>
     <PropertyGroup>
-        <!--        <Title>EFCore.BulkExtensions.MIT</Title>-->
-        <Title>videkojot.TestPackage</Title>
-        <PackageId>ToBeOverridenInChildProject</PackageId>
+        <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>videkojot.TestPackage</BasePackageId>
+        <PackageId>$(BasePackageId)</PackageId>
         <BaseVersion>6.5</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
@@ -13,7 +12,7 @@
         <PackageIcon>EFCoreBulk.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>EntityFrameworkCore Entity Framework Core EFCore EF Core SQL Server PostgreSQL MySQL SQLite Bulk Batch Extensions Insert Update Delete Read Truncate SaveChanges</PackageTags>
-        <RepositoryUrl>https://github.com/videokojot/EFCore.BulkExtensions</RepositoryUrl>
+        <RepositoryUrl>https://github.com/videokojot/EFCore.BulkExtensions.MIT</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <!--        <AssemblyVersion>6.6.5.0</AssemblyVersion>-->
@@ -28,41 +27,85 @@
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
 
+    <Choose>
+        <When Condition="$(MSBuildProjectName.Contains('v6'))">
+            <PropertyGroup>
+                <Version>6.$(BaseVersion)</Version>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('v7'))">
+            <PropertyGroup>
+                <Version>7.$(BaseVersion)</Version>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('v8'))">
+            <PropertyGroup>
+                <Version>8.$(BaseVersion)-preview1</Version>
+            </PropertyGroup>
+        </When>
+        <Otherwise>
+        </Otherwise>
+    </Choose>
+
     <!--    Add whole core lib -->
     <Import Project="..\EFCore.BulkExtensions\EFCore.BulkExtensions.projitems" Label="Shared"/>
 
     <!--    Exlude specific folders for single provider packages -->
-    <ItemGroup Condition="$(MSBuildProjectName.Contains('MySql'))">
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
-    </ItemGroup>
+    <Choose>
+        <When Condition="$(MSBuildProjectName.Contains('MySql'))">
+            <ItemGroup>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+            </ItemGroup>
+            <PropertyGroup>
+                <Title>$(Title).MySQL</Title>
+                <PackageId>$(BasePackageId).MySQL</PackageId>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('PostgreSql'))">
+            <ItemGroup>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+            </ItemGroup>
+            <PropertyGroup>
+                <Title>$(Title).PostgreSql</Title>
+                <PackageId>$(BasePackageId).PostgreSql</PackageId>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('SQLite'))">
+            <ItemGroup>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+            </ItemGroup>
+            <PropertyGroup>
+                <Title>$(Title).SQLite</Title>
+                <PackageId>$(BasePackageId).SQLite</PackageId>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('SqlServer'))">
+            <ItemGroup>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+            </ItemGroup>
+            <PropertyGroup>
+                <Title>$(Title).SqlServer</Title>
+                <PackageId>$(BasePackageId).SqlServer</PackageId>
+            </PropertyGroup>
+        </When>
+        <Otherwise>
+        </Otherwise>
+    </Choose>
 
-    <ItemGroup Condition="$(MSBuildProjectName.Contains('PostgreSql'))">
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="$(MSBuildProjectName.Contains('SQLite'))">
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="$(MSBuildProjectName.Contains('SqlServer'))">
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-        <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
-    </ItemGroup>
 
     <PropertyGroup>
         <EnablePackageValidation>true</EnablePackageValidation>
-
         <!-- Optional: Detect breaking changes from a previous version -->
         <!-- <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion> -->
     </PropertyGroup>
-
 
     <ItemGroup>
         <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
@@ -75,18 +118,9 @@
         <None Include="..\..\EFCoreBulk.png" PackagePath="" Pack="True"/>
     </ItemGroup>
 
-    <!--    <ItemGroup>-->
-    <!--        <None Remove="EFCoreBulk.png" />-->
-    <!--    </ItemGroup>-->
     <ItemGroup>
         <None Include="..\..\README.md" PackagePath="" Pack="True"/>
         <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE"/>
     </ItemGroup>
-    <!--    <ItemGroup>-->
-    <!--        <EmbeddedResource Include="EFCoreBulk.png" PackagePath="">-->
-    <!--            <Pack>True</Pack>-->
-    <!--        </EmbeddedResource>-->
-    <!--    </ItemGroup>-->
-
 
 </Project>

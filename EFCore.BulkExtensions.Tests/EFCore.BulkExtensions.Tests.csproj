@@ -49,6 +49,7 @@
 
     <PropertyGroup>
         <IsTestProject>false</IsTestProject>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
 </Project>

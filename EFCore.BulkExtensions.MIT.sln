@@ -32,6 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Items", "Items", "{214076BE
 		.gitignore = .gitignore
 		.editorconfig = .editorconfig
 		global.json = global.json
+		Directory.Bulid.props = Directory.Bulid.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NugetProjects", "NugetProjects", "{498FB27E-CE77-415B-B59A-5F271F876F5D}"

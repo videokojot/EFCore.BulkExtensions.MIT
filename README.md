@@ -1,11 +1,30 @@
-# EFCore.BulkExtensions
+# EFCore.BulkExtensions.MIT
+
+## This is MIT fork of [EFCore.BulkExtensions](https://github.com/borisdj/EFCore.BulkExtensions).
+### Why?
+Original project changed it's license to dual license (commercial and free only under certain conditions). This fork is distributed under MIT license.
+### When?
+I forked the project at commit [5bf938a422](https://github.com/borisdj/EFCore.BulkExtensions/tree/5bf938a422bf9f9cee2cdfa8c341559b391efec9) from 18.01.2023. This is the last version with the MIT license.
+### Why choose this fork instead of original version?
+- You need MIT version (obviously).
+- You care about **SetOutputIdentity**. In fork we fixed multiple bugs and added tests for it. See below:
+- This fork fixes numerous issues not fixed in original:
+- Any fix is also automatically propagated to major version (v6/7/8). So not only the latest major version receives new fixes.
+- **Tests** are now run as part of release process (see GitHub Actions for yourself).
+- **Tests** are against all versions, so no regressions should happen.
+- Project has been restructured to enable automatic testing in GitHub Actions and automatic releasing of new NuGet versions, so you can simply match the NuGet version to the sourcecode.
+### Why choose original version?
+- You need version below 6.x.
+
+# EFCore.BulkExtensions.MIT
 EntityFrameworkCore extensions: <br>
 -Bulk operations **(Insert, Update, Delete, Read, Upsert, Sync, SaveChanges)**<br>
 -Batch ops (**Delete, Update**) and **Truncate**.<br>
 Library is Lightweight and very Efficient, having all mostly used [CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete) operation.<br>
-Was selected in top 20 [EF Core Extensions](https://docs.microsoft.com/en-us/ef/core/extensions/) recommended by Microsoft.<br>
-Latest version is using EF Core 6 and targeting .Net 6.<br>
-Supports all 4 mayor databases:<br>
+
+[//]: # (Was selected in top 20 [EF Core Extensions]&#40;https://docs.microsoft.com/en-us/ef/core/extensions/&#41; recommended by Microsoft.<br>)
+Latest version is using EF Core 8 and targeting .Net 8.<br>
+Supports all 4 major databases:<br>
 -**SQLServer** (or SqlAzure) under the hood uses [SqlBulkCopy](https://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlbulkcopy.aspx) for Insert, Update/Delete = BulkInsert + raw Sql [MERGE](https://docs.microsoft.com/en-us/sql/t-sql/statements/merge-transact-sql).<br>
 -**PostgreSQL** (9.5+) is using [COPY BINARY](https://www.postgresql.org/docs/9.2/sql-copy.html) combined with [ON CONFLICT](https://www.postgresql.org/docs/10/sql-insert.html#SQL-ON-CONFLICT) for Update (supported from v6+).<br>
 -**MySQL** (8+) is using [MySqlBulkCopy](https://mysqlconnector.net/api/mysqlconnector/mysqlbulkcopytype/l) combined with [ON DUPLICATE](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) for Update (Only Bulk ops supported from v6+).<br>
@@ -13,30 +32,34 @@ Supports all 4 mayor databases:<br>
 Bulk Tests can not have UseInMemoryDb because InMemoryProvider does not support Relational-specific methods.<br>
 Instead Test options are  SqlServer(Developer or Express), LocalDb([if alongside Developer v.](https://stackoverflow.com/questions/42885377/sql-server-2016-developer-version-can-not-connect-to-localdb-mssqllocaldb?noredirect=1&lq=1)), or for other adapters PostgreSQL/MySQL/SQLite.
 
-<!--[![Button](https://img.shields.io/nuget/v/EFCore.BulkExtensions.svg)](https://www.nuget.org/packages/EFCore.BulkExtensions/)-->
-Available on <a href="https://www.nuget.org/packages/EFCore.BulkExtensions/"><img src="https://buildstats.info/nuget/EFCore.BulkExtensions" /></a><br>
+<!--[![Button](https://img.shields.io/nuget/v/EFCore.BulkExtensions.svg)](https://www.nuget.org/packages/EFCore.BulkExtensions.MIT/)-->
+Available on <a href="https://www.nuget.org/packages/EFCore.BulkExtensions.MIT/"><img src="https://buildstats.info/nuget/EFCore.BulkExtensions.MIT" /></a><br>
 That is main nuget for all Databases, there are also specific ones with single provider for those who need small packages.<br>
 Package manager console command for installation: *Install-Package EFCore.BulkExtensions*<br>
 Its assembly is [Strong-Named](https://docs.microsoft.com/en-us/dotnet/standard/library-guidance/strong-naming) and [Signed](https://github.com/borisdj/EFCore.BulkExtensions/issues/161) with a key.
 | Nuget | Target          | Used EF v.  | For projects targeting          |
 | ----- | --------------- | ----------- | ------------------------------- |
+| 8.x   | Net 8.0         | EF Core 8.0 | Net 8.0+                        |
+| 7.x   | Net 6.0         | EF Core 7.0 | Net 7.0+                        |
 | 6.x   | Net 6.0         | EF Core 6.0 | Net 6.0+                        |
-| 5.x   | NetStandard 2.1 | EF Core 5.0 | Net 5.0+                        |
-| 3.x   | NetStandard 2.0 | EF Core 3.n | NetCore(3.0+) or NetFrm(4.6.1+) [MoreInfo](https://github.com/borisdj/EFCore.BulkExtensions/issues/271#issuecomment-567117488)|
-| 2.x   | NetStandard 2.0 | EF Core 2.n | NetCore(2.0+) or NetFrm(4.6.1+) |
-| 1.x   | NetStandard 1.4 | EF Core 1.0 | NetCore(1.0+)                   |
+| 5.x   | N/A             | N/A         | N/A                             |
+| 3.x   | N/A             | N/A         | N/A                             |
 
 Prior versions (5 and lower) are no longer actively maintained.
 
 ## Contributing
 
 If you find this project useful you can mark it by leaving a Github **Star** :star:.</br>
-If you would like to support the Project by making a Donation, you are welcome to do so:<br>
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/boris.dj) _ or _ 
-[![Button](https://img.shields.io/badge/donate-Bitcoin-orange.svg?logo=bitcoin):zap:](https://borisdj.net/donation/donate-btc.html) (lightning)<br>
+
+[//]: # (If you would like to support the Project by making a Donation, you are welcome to do so:<br>)
+
+[//]: # ([!["Buy Me A Coffee"]&#40;https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png&#41;]&#40;https://www.buymeacoffee.com/boris.dj&#41; _ or _ )
+
+[//]: # ([![Button]&#40;https://img.shields.io/badge/donate-Bitcoin-orange.svg?logo=bitcoin&#41;:zap:]&#40;https://borisdj.net/donation/donate-btc.html&#41; &#40;lightning&#41;<br>)
 Please read [CONTRIBUTING](CONTRIBUTING.md) for details on code of conduct, and the process for submitting pull requests.<br>
 [![Button](https://img.shields.io/npm/l/express.svg)](https://github.com/borisdj/EFCore.BulkExtensions/blob/master/LICENSE)<br>
-[**ContactForm**](https://docs.google.com/forms/d/e/1FAIpQLSfcUe15zxZS_YI6zZIt-l3L0mpmQRPUsaoxylfgFTfSVu_gmg/viewform) for Development & Consulting.
+
+[//]: # ([**ContactForm**]&#40;https://docs.google.com/forms/d/e/1FAIpQLSfcUe15zxZS_YI6zZIt-l3L0mpmQRPUsaoxylfgFTfSVu_gmg/viewform&#41; for Development & Consulting.)
 
 ## Usage
 It's pretty simple and straightforward.<br>

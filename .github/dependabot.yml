@@ -14,14 +14,14 @@ updates:
       - "videokojo"
   # Maintain dependencies for .NET projects (EFCore.BulkExtensions.Tests)
   - package-ecosystem: "nuget"
-    directory: "/EFCore.BulkExtensions.Tests/"
+    directory: "/Tests"
     schedule:
       interval: "weekly"
     reviewers:
       - "videokojot"
   # Maintain dependencies for .NET projects (EFCore.BulkExtensions)
   - package-ecosystem: "nuget"
-    directory: "/EFCore.BulkExtensions/"
+    directory: "/NugetProjects"
     schedule:
       interval: "weekly"
     reviewers:
