@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
         <Title>EFCore.BulkExtensions.MIT</Title>
-        <BasePackageId>videkojot.TestPackage</BasePackageId>
+        <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
         <BaseVersion>6.5</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
@@ -31,16 +31,19 @@
         <When Condition="$(MSBuildProjectName.Contains('v6'))">
             <PropertyGroup>
                 <Version>6.$(BaseVersion)</Version>
+                <TargetFramework>net6.0</TargetFramework>
             </PropertyGroup>
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v7'))">
             <PropertyGroup>
                 <Version>7.$(BaseVersion)</Version>
+                <TargetFramework>net6.0</TargetFramework>
             </PropertyGroup>
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v8'))">
             <PropertyGroup>
                 <Version>8.$(BaseVersion)-preview1</Version>
+                <TargetFramework>net8.0</TargetFramework>
             </PropertyGroup>
         </When>
         <Otherwise>
@@ -99,7 +102,6 @@
         <Otherwise>
         </Otherwise>
     </Choose>
-
 
     <PropertyGroup>
         <EnablePackageValidation>true</EnablePackageValidation>
