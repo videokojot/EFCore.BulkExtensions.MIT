@@ -5,7 +5,18 @@
         <IsPackable>false</IsPackable>
         <NoWarn>$(NoWarn);CA2007;EF1002</NoWarn>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v6'))">
+        <DefineConstants>$(DefineConstants);V6</DefineConstants>
+    </PropertyGroup>
 
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v7'))">
+        <DefineConstants>$(DefineConstants);V7</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v8'))">
+        <DefineConstants>$(DefineConstants);V8</DefineConstants>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="xunit.assemblyfixture" Version="2.2.0"/>

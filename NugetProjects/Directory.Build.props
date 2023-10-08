@@ -125,4 +125,16 @@
         <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE"/>
     </ItemGroup>
 
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v6'))">
+        <DefineConstants>$(DefineConstants);V6</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v7'))">
+        <DefineConstants>$(DefineConstants);V7</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v8'))">
+        <DefineConstants>$(DefineConstants);V8</DefineConstants>
+    </PropertyGroup>
+
 </Project>
