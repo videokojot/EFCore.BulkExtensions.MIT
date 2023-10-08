@@ -27,9 +27,10 @@ public abstract class SqlQueryBuilder
         {
             columnsNames.Remove(tableInfo.TimeStampColumnName);
         }
-        string statsColumns = (tableInfo.BulkConfig.CalculateStats && isOutputTable) ? ",[IsUpdate] = CAST(0 AS bit),[IsDelete] = CAST(0 AS bit)" : "";
+        
+        string statsColumn = (tableInfo.BulkConfig.OutputTableHasSqlActionColumn && isOutputTable) ? $", [{tableInfo.SqlActionIUD}] = CAST('' AS char(1)) " : "";
 
-        var q = $"SELECT TOP 0 {GetCommaSeparatedColumns(columnsNames, "T")} " + statsColumns +
+        var q = $"SELECT TOP 0 {GetCommaSeparatedColumns(columnsNames, "T")} " + statsColumn +
                 $"INTO {newTableName} FROM {existingTableName} AS T " +
                 $"LEFT JOIN {existingTableName} AS Source ON 1 = 0;"; // removes Identity constrain
         return q;
@@ -110,7 +111,9 @@ public abstract class SqlQueryBuilder
     public static string SelectFromOutputTable(TableInfo tableInfo)
     {
         List<string> columnsNames = tableInfo.OutputPropertyColumnNamesDict.Values.ToList();
-        var q = $"SELECT {GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName} WHERE [{tableInfo.PrimaryKeysPropertyColumnNameDict.Select(x => x.Value).FirstOrDefault()}] IS NOT NULL";
+        var q = $"SELECT {GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName}"
+                + (tableInfo.BulkConfig.OutputTableHasSqlActionColumn ? $" WHERE {tableInfo.SqlActionIUD} <> 'D'" : ""); 
+        // Filter out the information about deleted rows (since we do not care about them when setting the output identity etc.)
         return q;
     }
 
@@ -265,10 +268,13 @@ public abstract class SqlQueryBuilder
                 defaults = defaults.Where(x => entityPropertyWithDefaultValue.Contains(x)).ToList();
             insertColumnsNames = insertColumnsNames.Where(a => !defaults.Contains(a)).ToList();
         }
+        
+        string mergeActionColumn = "";
 
-        string isUpdateStatsValue = (tableInfo.BulkConfig.CalculateStats)
-            ? ",(CASE $action WHEN 'UPDATE' THEN 1 Else 0 END),(CASE $action WHEN 'DELETE' THEN 1 Else 0 END)"
-            : string.Empty;
+        if (tableInfo.BulkConfig.OutputTableHasSqlActionColumn)
+        {
+            mergeActionColumn = ",SUBSTRING($action, 1, 1)";
+        }
 
         if (tableInfo.BulkConfig.PreserveInsertOrder)
         {
@@ -281,7 +287,8 @@ public abstract class SqlQueryBuilder
 
         string textWITH_HOLDLOCK = tableInfo.BulkConfig.WithHoldlock ? " WITH (HOLDLOCK)" : string.Empty;
 
-        var q = $"MERGE {targetTable}{textWITH_HOLDLOCK} AS T " +
+        var q = (tableInfo.BulkConfig.SetOutputIdentity? "DECLARE @temp INT; \n" : null) + // Declare dummy value so we can have noop in case of 'insert only do not update scenario'
+                $"MERGE {targetTable}{textWITH_HOLDLOCK} AS T " +
                 $"USING {sourceTable} AS S " +
                 $"ON {GetANDSeparatedColumns(primaryKeys, "T", "S", tableInfo.UpdateByPropertiesAreNullable)}";
         q += (primaryKeys.Count == 0) ? "1=0" : string.Empty;
@@ -314,6 +321,11 @@ public abstract class SqlQueryBuilder
                      ) +
                      (tableInfo.BulkConfig.OnConflictUpdateWhereSql != null ? $" AND {tableInfo.BulkConfig.OnConflictUpdateWhereSql("T", "S")}" : string.Empty )
                      + $" THEN UPDATE SET {GetCommaSeparatedColumns(updateColumnNames, "T", "S")}";
+            }
+            else if (updateColumnNames.Count == 0 && tableInfo.BulkConfig.SetOutputIdentity)
+            {
+                // Do nothing operation (set dummy value), but we need to have 'WHEN MATCHED' clause so we will get the output ids in the output table.
+                q += " WHEN MATCHED THEN UPDATE SET @temp = 1 "; 
             }
         }
 
@@ -364,7 +376,7 @@ public abstract class SqlQueryBuilder
             {
                 commaSeparatedColumnsNames = GetCommaSeparatedColumns(outputColumnsNames, "INSERTED");
             }
-            q += $" OUTPUT {commaSeparatedColumnsNames}" + isUpdateStatsValue +
+            q += $" OUTPUT {commaSeparatedColumnsNames}" + mergeActionColumn +
                  $" INTO {tableInfo.FullTempOutputTableName}";
         }
         q += ";";
