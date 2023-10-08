@@ -154,7 +154,7 @@ public class SqlOperationsServerAdapter: ISqlOperationsAdapter
             }
             else
             {
-                context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
+                    context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
             }
 
             if (tableInfo.TimeStampColumnName != null)
@@ -766,8 +766,9 @@ public class SqlOperationsServerAdapter: ISqlOperationsAdapter
                 {
                     using MemoryStream memStream = new();
                     using BinaryWriter binWriter = new(memStream);
-                    
+#if !NET8_0
                     hierarchyValue.Write(binWriter);
+#endif
                     propertyValue = memStream.ToArray();
                 }
 

@@ -1,0 +1,8 @@
+<Project>
+    
+    <!-- These will not work, if merged are needed use: 
+    https://stackoverflow.com/questions/45974279/multi-level-merging-of-msbuild-directory-build-props-files
+    -->
+
+</Project>
+

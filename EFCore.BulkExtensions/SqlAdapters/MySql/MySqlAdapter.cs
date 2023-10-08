@@ -626,8 +626,9 @@ public class MySqlAdapter : ISqlOperationsAdapter
                 {
                     using MemoryStream memStream = new();
                     using BinaryWriter binWriter = new(memStream);
-                    
+#if !NET8_0
                     hierarchyValue.Write(binWriter);
+#endif
                     propertyValue = memStream.ToArray();
                 }
 

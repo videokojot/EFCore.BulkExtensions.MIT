@@ -7,7 +7,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.ShadowProperties;
 
-public class ShadowPropertyTests : IDisposable
+public class ShadowPropertyTests : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]
