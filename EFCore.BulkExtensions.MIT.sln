@@ -39,6 +39,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{61E16CEC-3789-4450-A761-3BCE541CC0D9}"
 	ProjectSection(SolutionItems) = preProject
 		Tests\Directory.Build.props = Tests\Directory.Build.props
+		Tests\xunit.runner.json = Tests\xunit.runner.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EFCore.BulkExtensions.v7.Tests", "Tests\EFCore.BulkExtensions.v7.Tests\EFCore.BulkExtensions.v7.Tests.csproj", "{24700A2E-D5F5-4346-A859-FF17F80BE9BC}"
