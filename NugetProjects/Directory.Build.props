@@ -3,12 +3,12 @@
         <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
-        <BaseVersion>6.5</BaseVersion>
+        <BaseVersion>6.6</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
-        <Authors>borisdj, cincibuch</Authors>
+        <Authors>borisdj, Jindrich Cincibuch</Authors>
         <Description>EntityFramework EF Core Bulk Batch Extensions for Insert Update Delete Read (CRUD) operations on SQL Server, PostgreSQL, MySQL, SQLite</Description>
-        <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions.MIT</PackageProjectUrl>
         <PackageIcon>EFCoreBulk.png</PackageIcon>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>EntityFrameworkCore Entity Framework Core EFCore EF Core SQL Server PostgreSQL MySQL SQLite Bulk Batch Extensions Insert Update Delete Read Truncate SaveChanges</PackageTags>
