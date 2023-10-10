@@ -11,17 +11,35 @@ updates:
     schedule:
       interval: "weekly"
     reviewers:
-      - "videokojo"
+      - "videokojot"
   # Maintain dependencies for .NET projects (EFCore.BulkExtensions.Tests)
   - package-ecosystem: "nuget"
-    directory: "/Tests"
+    directory: "/Tests" # Directory.Build.props
     schedule:
       interval: "weekly"
     reviewers:
       - "videokojot"
   # Maintain dependencies for .NET projects (EFCore.BulkExtensions)
   - package-ecosystem: "nuget"
-    directory: "/NugetProjects"
+    directory: "/NugetProjects" # Directory.Build.props
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "videokojot"
+  - package-ecosystem: "nuget"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v6"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "videokojot"
+  - package-ecosystem: "nuget"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v7"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "videokojot"
+  - package-ecosystem: "nuget"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v8"
     schedule:
       interval: "weekly"
     reviewers:
