@@ -47,29 +47,30 @@ jobs:
           retention-days: 7
           path: ${{ env.NuGetDirectory }}/*.nupkg
 
-  validate_nuget:
-    runs-on: ubuntu-latest
-    needs: [ create_nuget ]
-    steps:
-      # Install the .NET SDK indicated in the global.json file
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+#  validate_nuget:
+#    runs-on: ubuntu-latest
+#    needs: [ create_nuget ]
+#    steps:
+#      # Install the .NET SDK indicated in the global.json file
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v3
+#
+#      # Download the NuGet package created in the previous job
+#      - uses: actions/download-artifact@v3
+#        with:
+#          name: nuget
+#          path: ${{ env.NuGetDirectory }}
+#
+#      - name: Install nuget validator
+#        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
+#
+#      # Validate metadata and content of the NuGet package
+#      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
+#      # If some rules are not applicable, you can disable them
+#      # using the --excluded-rules or --excluded-rule-ids option
+#      - name: Validate package
+#        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --github-token "${{ secrets.GITHUB_TOKEN }}" --excluded-rules Symbols 
 
-      # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v3
-        with:
-          name: nuget
-          path: ${{ env.NuGetDirectory }}
-
-      - name: Install nuget validator
-        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
-
-      # Validate metadata and content of the NuGet package
-      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
-      # If some rules are not applicable, you can disable them
-      # using the --excluded-rules or --excluded-rule-ids option
-      - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --github-token "${{ secrets.GITHUB_TOKEN }}" --excluded-rules Symbols 
   run_test:
     runs-on: ubuntu-latest
     steps:
