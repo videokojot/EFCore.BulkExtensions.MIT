@@ -109,7 +109,7 @@ jobs:
         uses: EndBug/latest-tag@latest
         with:
           ref: "6.${{ github.event.release.tag_name }}"
-          directory: 'path/to/repo/dir'
+#          directory: 'path/to/repo/dir'
       - name: Tag commit v7
         uses: EndBug/latest-tag@latest
         with:
