@@ -18,7 +18,7 @@ public class EFCoreBulkUnderlyingTest : IAssemblyFixture<DbAssemblyFixture>
     private static readonly Func<TestContext, Item?> LastItemQuery = EF.CompileQuery<TestContext, Item?>(ctx => ctx.Items.OrderBy(i => i.ItemId).LastOrDefault());
     private static readonly Func<TestContext, IEnumerable<Item>> AllItemsQuery = EF.CompileQuery<TestContext, IEnumerable<Item>>(ctx => ctx.Items.AsNoTracking());
 
-    [Theory]
+    [Theory(Skip = "Removed flaky test (sometimes fails in Connection Pool Clearing when it is cast to SQLConnection). I think you are not supposed to pass your own DbConnection implmentation.")]
     [InlineData(true)]
     public void OperationsTest(bool isBulk)
     {
