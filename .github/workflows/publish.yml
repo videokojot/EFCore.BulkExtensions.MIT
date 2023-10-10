@@ -102,10 +102,14 @@ jobs:
         with:
           dotnet-version: '8.x'
           
+      - name: Checkout
+        uses: actions/checkout@v4
+          
       - name: Tag commit v6
         uses: EndBug/latest-tag@latest
         with:
           ref: "6.${{ github.event.release.tag_name }}"
+#          directory: 'path/to/repo/dir'
       - name: Tag commit v7
         uses: EndBug/latest-tag@latest
         with:
