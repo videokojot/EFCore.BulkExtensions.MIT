@@ -101,6 +101,22 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.x'
+          
+      - name: Tag commit v6
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "6.${{ github.event.release.tag_name }}"
+      - name: Tag commit v7
+        uses: tvdias/github-tagger@v0.0.2
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "7.${{ github.event.release.tag_name }}"
+      - name: Tag commit v8
+        uses: tvdias/github-tagger@v0.0.2
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "8.${{ github.event.release.tag_name }}-preview1"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.
