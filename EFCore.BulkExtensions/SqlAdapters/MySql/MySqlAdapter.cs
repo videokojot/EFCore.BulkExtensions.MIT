@@ -377,7 +377,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         var columnsDict = new Dictionary<string, object?>();
         var ownedEntitiesMappedProperties = new HashSet<string>();
 
-        var databaseType = SqlAdaptersMapping.GetDatabaseType();
+        var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
         var isMySql = databaseType == DbServerType.MySQL;
         
         var objectIdentifier = tableInfo.ObjectIdentifier;

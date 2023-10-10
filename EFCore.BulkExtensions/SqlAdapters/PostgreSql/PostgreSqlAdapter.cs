@@ -32,7 +32,7 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
     /// <inheritdoc/>
     protected static async Task InsertAsync<T>(DbContext context, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
     {
-        NpgsqlConnection? connection = (NpgsqlConnection?)SqlAdaptersMapping.DbServer!.DbConnection;
+        NpgsqlConnection? connection = (NpgsqlConnection?)SqlAdaptersMapping.DbServer(context).DbConnection;
         bool closeConnectionInternally = false;
         if (connection == null)
         {

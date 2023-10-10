@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -22,7 +23,11 @@ namespace EFCore.BulkExtensions;
 /// </summary>
 public class TableInfo
 {
-#pragma warning disable CS1591 // No XML comments required here.
+
+    public TableInfo()
+    {
+        
+    }
     public string? Schema { get; set; }
     public string SchemaFormated => Schema != null ? $"[{Schema}]." : "";
     public string? TempSchema { get; set; }
@@ -79,32 +84,11 @@ public class TableInfo
 
     public StoreObjectIdentifier ObjectIdentifier { get; set; }
 
-    ////Sqlite
-    //internal SqliteConnection? SqliteConnection { get; set; }
-    //internal SqliteTransaction? SqliteTransaction { get; set; }
-
-
-    ////PostgreSql
-    //internal NpgsqlConnection? NpgsqlConnection { get; set; }
-    ////internal NpgsqlTransaction? NpgsqlTransaction { get; set; }
-
-    ////MySql
-    //internal MySqlConnection? MySqlConnection { get; set; }
-
-
-#pragma warning restore CS1591 // No XML comments required here.
+    public DbTransaction? DbTransaction { get; set; }
 
     /// <summary>
     /// Creates an instance of TableInfo
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="operationType"></param>
-    /// <param name="bulkConfig"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
     public static TableInfo CreateInstance<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig)
     {
         var tableInfo = new TableInfo
@@ -272,7 +256,7 @@ public class TableInfo
 
         if (isSqlServer || isNpgsql || isMySql)
         {
-            var strategyName = SqlAdaptersMapping.DbServer!.ValueGenerationStrategy;
+            var strategyName = SqlAdaptersMapping.DbServer(context).ValueGenerationStrategy;
             if (!strategyName.Contains(":Value"))
             {
                 strategyName = strategyName.Replace("Value", ":Value"); //example 'SqlServer:ValueGenerationStrategy'
@@ -284,7 +268,7 @@ public class TableInfo
                 bool hasIdentity = false;
                 if (annotation != null)
                 {
-                    hasIdentity = SqlAdaptersMapping.DbServer!.PropertyHasIdentity(annotation);
+                    hasIdentity = SqlAdaptersMapping.DbServer(context).PropertyHasIdentity(annotation);
                 }
                 if (hasIdentity)
                 {
@@ -872,10 +856,6 @@ public class TableInfo
     /// <summary>
     /// Sets the identity preserve order
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="tableInfo"></param>
-    /// <param name="entities"></param>
-    /// <param name="reset"></param>
     public void CheckToSetIdentityForPreserveOrder<T>(TableInfo tableInfo, IList<T> entities, bool reset = false)
     {
         string identityPropertyName = PropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key;
@@ -985,10 +965,6 @@ public class TableInfo
     /// <summary>
     /// Updates the entities' identity field
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="tableInfo"></param>
-    /// <param name="entities"></param>
-    /// <param name="entitiesWithOutputIdentity"></param>
     public void UpdateEntitiesIdentity<T>(TableInfo tableInfo, IList<T> entities, IList<object> entitiesWithOutputIdentity)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
@@ -1099,8 +1075,8 @@ public class TableInfo
         int totalNumber = entities.Count;
         if (BulkConfig.SetOutputIdentity && hasIdentity)
         {
-            var databaseType = SqlAdaptersMapping.GetDatabaseType();
-            string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer!.QueryBuilder.SelectFromOutputTable(this);
+            var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
+            string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer(context).QueryBuilder.SelectFromOutputTable(this);
             //var entitiesWithOutputIdentity = await QueryOutputTableAsync<T>(context, sqlQuery).ToListAsync(cancellationToken).ConfigureAwait(false); // TempFIX
             var entitiesWithOutputIdentity = QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
             //var entitiesWithOutputIdentity = (typeof(T) == type) ? QueryOutputTable<object>(context, sqlQuery).ToList() : QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();

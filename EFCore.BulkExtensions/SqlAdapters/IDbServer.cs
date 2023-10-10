@@ -31,17 +31,12 @@ public interface IDbServer
     /// <summary>
     /// Contains a compilation of SQL queries used in EFCore.
     /// </summary>
-    SqlAdapters.QueryBuilderExtensions QueryBuilder { get; }
+    QueryBuilderExtensions QueryBuilder { get; }
 
     /// <summary>
     /// Gets or Sets a DbConnection for the provider
     /// </summary>
     DbConnection? DbConnection { get; set; }
-
-    /// <summary>
-    /// Gets or Sets a DbTransaction for the provider
-    /// </summary>
-    DbTransaction? DbTransaction { get; set; }
 
     /// <summary>
     /// Returns the current Provider's Value Generating Strategy
