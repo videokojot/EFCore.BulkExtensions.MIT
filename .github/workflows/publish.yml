@@ -103,20 +103,17 @@ jobs:
           dotnet-version: '8.x'
           
       - name: Tag commit v6
-        uses: tvdias/github-tagger@v0.0.1
+        uses: EndBug/latest-tag@latest
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "6.${{ github.event.release.tag_name }}"
+          ref: "6.${{ github.event.release.tag_name }}"
       - name: Tag commit v7
-        uses: tvdias/github-tagger@v0.0.2
+        uses: EndBug/latest-tag@latest
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "7.${{ github.event.release.tag_name }}"
+          ref: "7.${{ github.event.release.tag_name }}"
       - name: Tag commit v8
-        uses: tvdias/github-tagger@v0.0.2
+        uses: EndBug/latest-tag@latest
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "8.${{ github.event.release.tag_name }}-preview1"
+          ref: "8.${{ github.event.release.tag_name }}-preview1"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.
@@ -126,18 +123,3 @@ jobs:
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
               dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
-      - name: Tag commit v6
-        uses: tvdias/github-tagger@v0.0.2
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "6.${{ github.event.release.tag_name }}"
-      - name: Tag commit v7
-        uses: tvdias/github-tagger@v0.0.2
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "7.${{ github.event.release.tag_name }}"
-      - name: Tag commit v8
-        uses: tvdias/github-tagger@v0.0.2
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          tag: "8.${{ github.event.release.tag_name }}-preview1"
