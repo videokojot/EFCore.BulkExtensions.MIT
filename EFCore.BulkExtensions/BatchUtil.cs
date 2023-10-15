@@ -34,15 +34,12 @@ public static class BatchUtil
     /// <summary>
     /// Generates delete sql query
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="context"></param>
-    /// <returns></returns>
     public static (string, List<object>) GetSqlDelete(IQueryable query, DbContext context)
     {
         var (sql, tableAlias, _, topStatement, leadingComments, innerParameters) = GetBatchSql(query, context, isUpdate: false);
 
         innerParameters = ReloadSqlParameters(context, innerParameters.ToList()); // Sqlite requires SqliteParameters
-        var databaseType = SqlAdaptersMapping.GetDatabaseType();
+        var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
 
         string resultQuery;
         if (databaseType == DbServerType.SQLServer)
@@ -96,12 +93,12 @@ public static class BatchUtil
 
         if (databaseType == DbServerType.PostgreSQL)
         {
-            resultQuery = SqlAdaptersMapping.DbServer!.QueryBuilder.RestructureForBatch(resultQuery, isDelete: true);
+            resultQuery = SqlAdaptersMapping.DbServer(context).QueryBuilder.RestructureForBatch(resultQuery, isDelete: true);
 
             var npgsqlParameters = new List<object>();
             foreach (var param in innerParameters)
             {
-                npgsqlParameters.Add(SqlAdaptersMapping.DbServer!.QueryBuilder.CreateParameter((SqlParameter)param));
+                npgsqlParameters.Add(SqlAdaptersMapping.DbServer(context).QueryBuilder.CreateParameter((SqlParameter)param));
             }
             innerParameters = npgsqlParameters;
         }
@@ -119,12 +116,6 @@ public static class BatchUtil
     /// <summary>
     /// Generates sql query to update data
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="updateValues"></param>
-    /// <param name="updateColumns"></param>
-    /// <returns></returns>
     public static (string, List<object>) GetSqlUpdate(IQueryable query, DbContext context, Type type, object? updateValues, List<string>? updateColumns)
     {
         var (sql, tableAlias, tableAliasSufixAs, topStatement, leadingComments, innerParameters) = GetBatchSql(query, context, isUpdate: true);
@@ -145,22 +136,22 @@ public static class BatchUtil
             resultQuery = resultQuery.Split("ORDER", StringSplitOptions.None)[0];
         }
 
-        var databaseType = SqlAdaptersMapping.GetDatabaseType();
+        var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
         if (databaseType == DbServerType.PostgreSQL)
         {
-            resultQuery = SqlAdaptersMapping.DbServer!.QueryBuilder.RestructureForBatch(resultQuery);
+            resultQuery = SqlAdaptersMapping.DbServer(context).QueryBuilder.RestructureForBatch(resultQuery);
 
             var npgsqlParameters = new List<object>();
             foreach (var param in sqlParameters)
             {
-                dynamic npgsqlParam = SqlAdaptersMapping.DbServer!.QueryBuilder.CreateParameter((SqlParameter)param);
+                dynamic npgsqlParam = SqlAdaptersMapping.DbServer(context).QueryBuilder.CreateParameter((SqlParameter)param);
 
                 string paramName = npgsqlParam.ParameterName.Replace("@", "");
                 var propertyType = type.GetProperties().SingleOrDefault(a => a.Name == paramName)?.PropertyType;
                 if (propertyType == typeof(System.Text.Json.JsonElement) || propertyType == typeof(System.Text.Json.JsonElement?)) // for JsonDocument works without fix
                 {
-                    var dbtypeJsonb = SqlAdaptersMapping.DbServer!.QueryBuilder.Dbtype();
-                    SqlAdaptersMapping.DbServer!.QueryBuilder.SetDbTypeParam(npgsqlParam, dbtypeJsonb);
+                    var dbtypeJsonb = SqlAdaptersMapping.DbServer(context).QueryBuilder.Dbtype();
+                    SqlAdaptersMapping.DbServer(context).QueryBuilder.SetDbTypeParam(npgsqlParam, dbtypeJsonb);
                 }
 
                 npgsqlParameters.Add(npgsqlParam);
@@ -174,19 +165,13 @@ public static class BatchUtil
     /// <summary>
     /// get Update Sql
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="query"></param>
-    /// <param name="expression"></param>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <returns></returns>
     public static (string, List<object>) GetSqlUpdate<T>(IQueryable<T> query, DbContext context, Type type, Expression<Func<T, T>> expression) where T : class
     {
         (string sql, string tableAlias, string tableAliasSufixAs, string topStatement, string leadingComments, IEnumerable<object> innerParameters) = GetBatchSql(query, context, isUpdate: true);
 
         var createUpdateBodyData = new BatchUpdateCreateBodyData(sql, context, innerParameters, query, type, tableAlias, expression);
 
-        CreateUpdateBody(createUpdateBodyData, expression.Body);
+        CreateUpdateBody(context, createUpdateBodyData, expression.Body);
 
         var sqlParameters = ReloadSqlParameters(context, createUpdateBodyData.SqlParameters); // Sqlite requires SqliteParameters
         var sqlColumns = (createUpdateBodyData.DatabaseType == DbServerType.SQLServer) 
@@ -205,21 +190,21 @@ public static class BatchUtil
             resultQuery = resultQuery.Split("ORDER", StringSplitOptions.None)[0];
         }
 
-        var databaseType = SqlAdaptersMapping.GetDatabaseType();
+        var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
         if (databaseType == DbServerType.PostgreSQL)
         {
-            resultQuery = SqlAdaptersMapping.DbServer!.QueryBuilder.RestructureForBatch(resultQuery);
+            resultQuery = SqlAdaptersMapping.DbServer(context).QueryBuilder.RestructureForBatch(resultQuery);
 
             var npgsqlParameters = new List<object>();
             foreach (var param in sqlParameters)
             {
-                dynamic npgsqlParam = SqlAdaptersMapping.DbServer!.QueryBuilder.CreateParameter((SqlParameter)param);
+                dynamic npgsqlParam = SqlAdaptersMapping.DbServer(context).QueryBuilder.CreateParameter((SqlParameter)param);
 
                 string paramName = npgsqlParam.ParameterName.Replace("@", "");
                 var propertyType = type.GetProperties().SingleOrDefault(a => a.Name == paramName)?.PropertyType;
                 if (propertyType == typeof(System.Text.Json.JsonElement) || propertyType == typeof(System.Text.Json.JsonElement?))
                 {
-                    npgsqlParam.NpgsqlDbType = SqlAdaptersMapping.DbServer!.QueryBuilder.Dbtype();
+                    npgsqlParam.NpgsqlDbType = SqlAdaptersMapping.DbServer(context).QueryBuilder.Dbtype();
                 }
 
                 npgsqlParameters.Add(npgsqlParam);
@@ -233,25 +218,17 @@ public static class BatchUtil
     /// <summary>
     /// Reloads SQL paramaters
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="sqlParameters"></param>
-    /// <returns></returns>
     public static List<object> ReloadSqlParameters(DbContext context, List<object> sqlParameters)
     {
-        return SqlAdaptersMapping.GetAdapterDialect().ReloadSqlParameters(context,sqlParameters);
+        return SqlAdaptersMapping.GetAdapterDialect(context).ReloadSqlParameters(context,sqlParameters);
     }
 
     /// <summary>
     /// Generates SQL queries for batch operations
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="context"></param>
-    /// <param name="isUpdate"></param>
-    /// <returns></returns>
     public static (string Sql, string TableAlias, string TableAliasSufixAs, string TopStatement, string LeadingComments, IEnumerable<object> InnerParameters) GetBatchSql(IQueryable query, DbContext context, bool isUpdate)
     {
-        SqlAdaptersMapping.ProviderName = context.Database.ProviderName;
-        var sqlQueryBuilder = SqlAdaptersMapping.GetAdapterDialect();
+        var sqlQueryBuilder = SqlAdaptersMapping.GetAdapterDialect(context);
         var (fullSqlQuery, innerParameters) = query.ToParametrizedSql();
 
         var (leadingComments, sqlQuery) = SplitLeadingCommentsAndMainSqlQuery(fullSqlQuery);
@@ -260,7 +237,7 @@ public static class BatchUtil
         string tableAliasSufixAs = string.Empty;
         string topStatement;
 
-        var databaseType = SqlAdaptersMapping.GetDatabaseType();
+        var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
         (tableAlias, topStatement) = sqlQueryBuilder.GetBatchSqlReformatTableAliasAndTopStatement(sqlQuery, databaseType);
 
         int indexFrom = sqlQuery.IndexOf(Environment.NewLine, StringComparison.Ordinal);
@@ -284,12 +261,6 @@ public static class BatchUtil
     /// <summary>
     /// Returns a sql set seqment query
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="updateValuesType"></param>
-    /// <param name="updateValues"></param>
-    /// <param name="updateColumns"></param>
-    /// <param name="parameters"></param>
-    /// <returns></returns>
     public static string GetSqlSetSegment(DbContext context, Type? updateValuesType, object? updateValues, List<string>? updateColumns, List<object> parameters)
     {
         var tableInfo = TableInfo.CreateInstance(context, updateValuesType, new List<object>(), OperationType.Read, new BulkConfig());
@@ -376,11 +347,7 @@ public static class BatchUtil
     /// <summary>
     /// Recursive analytic expression 
     /// </summary>
-    /// <param name="createBodyData"></param>
-    /// <param name="expression"></param>
-    /// <param name="columnName"></param>
-    /// <exception cref="NotSupportedException"></exception>
-    public static void CreateUpdateBody(BatchUpdateCreateBodyData createBodyData, Expression expression, string? columnName = null)
+    public static void CreateUpdateBody(DbContext context, BatchUpdateCreateBodyData createBodyData, Expression expression, string? columnName = null)
     {
         var rootTypeTableInfo = createBodyData.GetTableInfoForType(createBodyData.RootType);
         var columnNameValueDict = rootTypeTableInfo?.PropertyColumnNamesDict;
@@ -405,7 +372,7 @@ public static class BatchUtil
 
                     if (!TryCreateUpdateBodyNestedQuery(createBodyData, assignment.Expression, assignment))
                     {
-                        CreateUpdateBody(createBodyData, assignment.Expression, currentColumnName);
+                        CreateUpdateBody(context, createBodyData, assignment.Expression, currentColumnName);
                     }
 
                     if (memberInitExpression.Bindings.IndexOf(item) < (memberInitExpression.Bindings.Count - 1))
@@ -445,11 +412,11 @@ public static class BatchUtil
             switch (unaryExpression.NodeType)
             {
                 case ExpressionType.Convert:
-                    CreateUpdateBody(createBodyData, unaryExpression.Operand, columnName);
+                    CreateUpdateBody(context, createBodyData, unaryExpression.Operand, columnName);
                     break;
                 case ExpressionType.Not:
                     sqlColumns.Append(" ~");//this way only for SQL Server 
-                    CreateUpdateBody(createBodyData, unaryExpression.Operand, columnName);
+                    CreateUpdateBody(context, createBodyData, unaryExpression.Operand, columnName);
                     break;
                 default: break;
             }
@@ -462,54 +429,54 @@ public static class BatchUtil
             switch (binaryExpression.NodeType)
             {
                 case ExpressionType.Add:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
-                    var sqlOperator = SqlAdaptersMapping.GetAdapterDialect()
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
+                    var sqlOperator = SqlAdaptersMapping.GetAdapterDialect(context)
                         .GetBinaryExpressionAddOperation(binaryExpression);
                     sqlColumns.Append(" " + sqlOperator);
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.Divide:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" /");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.Multiply:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" *");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.Subtract:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" -");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.And:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" &");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.Or:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" |");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.ExclusiveOr:
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(" ^");
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     break;
 
                 case ExpressionType.Coalesce:
                     sqlColumns.Append("COALESCE(");
-                    CreateUpdateBody(createBodyData, binaryExpression.Left, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Left, columnName);
                     sqlColumns.Append(',');
-                    CreateUpdateBody(createBodyData, binaryExpression.Right, columnName);
+                    CreateUpdateBody(context, createBodyData, binaryExpression.Right, columnName);
                     sqlColumns.Append(')');
                     break;
 
@@ -550,8 +517,6 @@ public static class BatchUtil
     /// <summary>
     /// Splits the leading comments from the main sql query
     /// </summary>
-    /// <param name="sqlQuery"></param>
-    /// <returns></returns>
     public static (string, string) SplitLeadingCommentsAndMainSqlQuery(string sqlQuery)
     {
         var leadingCommentsBuilder = new StringBuilder();
@@ -667,10 +632,6 @@ public static class BatchUtil
     /// <summary>
     /// Tries to create nested body query
     /// </summary>
-    /// <param name="createBodyData"></param>
-    /// <param name="expression"></param>
-    /// <param name="memberAssignment"></param>
-    /// <returns></returns>
     public static bool TryCreateUpdateBodyNestedQuery(BatchUpdateCreateBodyData createBodyData, Expression expression, MemberAssignment memberAssignment)
     {
         if (expression is MemberExpression rootMemberExpression && rootMemberExpression.Expression is ParameterExpression)
