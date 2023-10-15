@@ -79,6 +79,8 @@ public class TableInfo
 
     public StoreObjectIdentifier ObjectIdentifier { get; set; }
 
+    public string SqlActionIUD => "MergeActionIUD";
+
     ////Sqlite
     //internal SqliteConnection? SqliteConnection { get; set; }
     //internal SqliteTransaction? SqliteTransaction { get; set; }
@@ -691,6 +693,93 @@ public class TableInfo
         return tableExist;
     }
 
+    public record struct MergeActionCounts(int Inserted, int Updated, int Deleted);
+
+    public async Task<MergeActionCounts> GetMergeActionCounts(DbContext context, bool isAsync, CancellationToken cancellationToken)
+    {
+        var commandText = $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'I';\n"
+                                 + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'U' ;\n"
+                                 + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'D';";
+
+        var inserted = -1;
+        var updated = -1;
+        var deleted = -1;
+
+        if (isAsync)
+        {
+            await GetMergeActionCountsAsync().ConfigureAwait(false);
+        }
+        else
+        {
+            GetMergeActionCountsInternal();
+        }
+
+        return new MergeActionCounts(inserted, updated, deleted);
+
+        async Task GetMergeActionCountsAsync()
+        {
+            #pragma warning disable CA2007
+
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+
+            command.CommandText = commandText;
+            
+            if (command.Connection!.State != ConnectionState.Open)
+            {
+               await command.Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            }
+            
+            if (context.Database.CurrentTransaction != null)
+            {
+                command.Transaction = context.Database.CurrentTransaction.GetDbTransaction();
+            }
+            
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+
+            await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            inserted = reader.GetInt32(0);
+            await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
+
+            await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            updated = reader.GetInt32(0);
+            await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
+
+            await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            deleted = reader.GetInt32(0);
+            #pragma warning restore CA2007
+        }
+
+        void GetMergeActionCountsInternal()
+        {
+            using var command = context.Database.GetDbConnection().CreateCommand();
+
+            command.CommandText = commandText;
+            
+            if (command.Connection!.State != ConnectionState.Open)
+            {
+                command.Connection.Open();
+            }
+            
+            if (context.Database.CurrentTransaction != null)
+            {
+                command.Transaction = context.Database.CurrentTransaction.GetDbTransaction();
+            }
+            
+            using var reader = command.ExecuteReader();
+
+            reader.Read();
+            inserted = reader.GetInt32(0);
+            reader.NextResult();
+
+            reader.Read();
+            updated = reader.GetInt32(0);
+            reader.NextResult();
+
+            reader.Read();
+            deleted = reader.GetInt32(0);
+        }
+    }
+
     /// <summary>
     /// Checks the number of updated entities
     /// </summary>
@@ -1006,49 +1095,79 @@ public class TableInfo
                 };
                 return;
             }
+            
+            
+            var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Values;
+
+            if (countDiff < 0)
+            {
+                // This might happen in case of BulkInsertOrUpdate with custom UpdateBy properties, when there are multiple matching rows in table which is updated
+                // for more see: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+                // In case of setting output identity, we cannot decide which id we should use (as there might be multiple rows in output table, which 'belong' to only one row in source table).
+
+                var nonUniqueKeys = entitiesWithOutputIdentity.GroupBy(x => new PrimaryKeysPropertyColumnNameValues(customPK.Select(c => FastPropertyDict[c].Get(x)))).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
+
+                throw new InvalidOperationException("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
+                                                    + "Keys which matched more rows: " + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
+            }
 
             if (tableInfo.EntitiesSortedReference != null)
             {
                 entities = tableInfo.EntitiesSortedReference.Cast<T>().ToList();
             }
+            
+            
+            // (UpsertOrderTest) fix for BulkInsertOrUpdate assigns wrong output IDs when PreserveInsertOrder = true and SetOutputIdentity = true
+            var setByDictionary = !(customPK.Count == 1 && customPK.First() == identifierPropertyName)
+                                  && (tableInfo.BulkConfig.OperationType == OperationType.Update
+                                      || tableInfo.BulkConfig.OperationType == OperationType.InsertOrUpdate
+                                      || tableInfo.BulkConfig.OperationType == OperationType.InsertOrUpdateOrDelete);
 
-            var entitiesDict = new Dictionary<object, T>();
-            var numberOfOutputEntities = Math.Min(NumberOfEntities, entitiesWithOutputIdentity.Count);
-            for (int i = 0; i < numberOfOutputEntities; i++)
+            Dictionary<PrimaryKeysPropertyColumnNameValues, T> entitiesDict;
+            
+            if (setByDictionary)
             {
+                entitiesDict = new Dictionary<PrimaryKeysPropertyColumnNameValues, T>();
+                foreach (var entity in entities)
+                {
+                    PrimaryKeysPropertyColumnNameValues customPKValue = new(customPK.Select(c => FastPropertyDict[c].Get(entity!)));
+                    entitiesDict.Add(customPKValue, entity);
+                }
+            }
+            else
+            {
+                // we will not be using the dictionary in the loop below.
+                entitiesDict = null!;
+            }
+            
+            for (int i = 0; i < NumberOfEntities; i++)
+            {
+                T entityToBeFilled;
+                object elementFromOutputTable = entitiesWithOutputIdentity.ElementAt(i);
+
+                if (setByDictionary)
+                {
+                    PrimaryKeysPropertyColumnNameValues customPKOutputValue = new(customPK.Select(c => FastPropertyDict[c].Get(elementFromOutputTable)));
+                    entityToBeFilled = entitiesDict[customPKOutputValue]!;
+                }
+                else
+                {
+                    // We rely on the order:
+                    entityToBeFilled = entities.ElementAt(i)!;
+                }
+                
                 if (identifierPropertyName != null)
                 {
-                    var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Values;
-                    if (!(customPK.Count == 1 && customPK.First() == identifierPropertyName) &&
-                        (tableInfo.BulkConfig.OperationType == OperationType.Update ||
-                         tableInfo.BulkConfig.OperationType == OperationType.InsertOrUpdate ||
-                         tableInfo.BulkConfig.OperationType == OperationType.InsertOrUpdateOrDelete)
-                       ) // (UpsertOrderTest) fix for BulkInsertOrUpdate assigns wrong output IDs when PreserveInsertOrder = true and SetOutputIdentity = true
-                    {
-                        if (entitiesDict.Count == 0)
-                        {
-                            foreach (var entity in entities)
-                            {
-                                PrimaryKeysPropertyColumnNameValues customPKValue = new(customPK.Select(c => FastPropertyDict[c].Get(entity!)));
-                                entitiesDict.Add(customPKValue, entity);
-                            }
-                        }
-                        var identityPropertyValue = FastPropertyDict[identifierPropertyName].Get(entitiesWithOutputIdentity[i]);
-                        PrimaryKeysPropertyColumnNameValues customPKOutputValue = new(customPK.Select(c => FastPropertyDict[c].Get(entitiesWithOutputIdentity[i])));
-                        FastPropertyDict[identifierPropertyName].Set(entitiesDict[customPKOutputValue]!, identityPropertyValue);
-                    }
-                    else
-                    {
-                        var identityPropertyValue = FastPropertyDict[identifierPropertyName].Get(entitiesWithOutputIdentity[i]);
-                        FastPropertyDict[identifierPropertyName].Set(entities[i]!, identityPropertyValue);
-                    }
+                    var selectOnlyIdentityColumn = false;
+                    var identityPropertyValue = selectOnlyIdentityColumn ? elementFromOutputTable : FastPropertyDict[identifierPropertyName].Get(elementFromOutputTable);
+                    FastPropertyDict[identifierPropertyName].Set(entityToBeFilled, identityPropertyValue);
                 }
 
                 if (TimeStampColumnName != null) // timestamp/rowversion is also generated by the SqlServer so if exist should be updated as well
                 {
                     string timeStampPropertyName = OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == TimeStampColumnName).Key;
-                    var timeStampPropertyValue = FastPropertyDict[timeStampPropertyName].Get(entitiesWithOutputIdentity[i]);
-                    FastPropertyDict[timeStampPropertyName].Set(entities[i]!, timeStampPropertyValue);
+                    var timeStampPropertyValue = FastPropertyDict[timeStampPropertyName].Get(elementFromOutputTable);
+                    FastPropertyDict[timeStampPropertyName].Set(entityToBeFilled, timeStampPropertyValue);
                 }
 
                 var propertiesToLoad = tableInfo.OutputPropertyColumnNamesDict.Keys.Where(a => a != identifierPropertyName && a != TimeStampColumnName && // already loaded in segmet above
@@ -1056,8 +1175,8 @@ public class TableInfo
                                                                                                 !tableInfo.PropertyColumnNamesDict.ContainsKey(a)));      // remove others since already have same have (could be omited)
                 foreach (var outputPropertyName in propertiesToLoad)
                 {
-                    var propertyValue = FastPropertyDict[outputPropertyName].Get(entitiesWithOutputIdentity[i]);
-                    FastPropertyDict[outputPropertyName].Set(entities[i]!, propertyValue);
+                    var propertyValue = FastPropertyDict[outputPropertyName].Get(elementFromOutputTable);
+                    FastPropertyDict[outputPropertyName].Set(entityToBeFilled, propertyValue);
                 }
             }
         }
@@ -1107,27 +1226,23 @@ public class TableInfo
 
             //var entitiesObjects = entities.Cast<object>().ToList();
             UpdateEntitiesIdentity(tableInfo, entities, entitiesWithOutputIdentity);
-            totalNumber = entitiesWithOutputIdentity.Count;
         }
         if (BulkConfig.CalculateStats)
         {
-            int numberUpdated;
-            int numberDeleted;
+            MergeActionCounts mergeCounts;
             if (isAsync)
             {
-                numberUpdated = await GetNumberUpdatedAsync(context, isAsync: true, cancellationToken).ConfigureAwait(false);
-                numberDeleted = await GetNumberDeletedAsync(context, isAsync: true, cancellationToken).ConfigureAwait(false);
+                mergeCounts = await GetMergeActionCounts(context, isAsync: true, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                numberUpdated = GetNumberUpdatedAsync(context, isAsync: false, cancellationToken).GetAwaiter().GetResult();
-                numberDeleted = GetNumberDeletedAsync(context, isAsync: false, cancellationToken).GetAwaiter().GetResult();
+                mergeCounts = GetMergeActionCounts(context, isAsync: false, cancellationToken).GetAwaiter().GetResult();
             }
             BulkConfig.StatsInfo = new StatsInfo
             {
-                StatsNumberUpdated = numberUpdated,
-                StatsNumberDeleted = numberDeleted,
-                StatsNumberInserted = totalNumber - numberUpdated - numberDeleted
+                StatsNumberUpdated = mergeCounts.Updated,
+                StatsNumberDeleted = mergeCounts.Deleted,
+                StatsNumberInserted = mergeCounts.Inserted,
             };
         }
     }
@@ -1313,5 +1428,10 @@ internal class PrimaryKeysPropertyColumnNameValues
             }
             return hash;
         }
+    }
+    
+    public string ToLogString()
+    {
+        return "( " + string.Join(", ", PkValues) + " )";
     }
 }
