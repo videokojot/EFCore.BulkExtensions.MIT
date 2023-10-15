@@ -391,7 +391,10 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
         var entityPropertiesDict = entityType?.GetProperties().Where(a => tableInfo.PropertyColumnNamesDict.ContainsKey(a.Name)).ToDictionary(a => a.Name, a => a);
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-        var entityShadowFkPropertiesDict = entityType?.GetProperties().Where(a => a.IsShadowProperty() && a.IsForeignKey() && a.GetContainingForeignKeys().FirstOrDefault()?.DependentToPrincipal?.Name != null)
+        var entityShadowFkPropertiesDict = entityType?.GetProperties()
+                                                     .Where(a => a.IsShadowProperty()
+                                                                 && a.IsForeignKey()
+                                                                 && a.GetContainingForeignKeys().FirstOrDefault()?.DependentToPrincipal?.Name != null)
                                                      .ToDictionary(x => x.GetContainingForeignKeys()?.First()?.DependentToPrincipal?.Name ?? string.Empty, a => a);
 
         foreach (var property in properties)
