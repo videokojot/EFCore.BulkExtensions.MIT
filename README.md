@@ -7,14 +7,20 @@ Original project changed it's license to dual license (commercial and free only 
 I forked the project at commit [5bf938a422](https://github.com/borisdj/EFCore.BulkExtensions/tree/5bf938a422bf9f9cee2cdfa8c341559b391efec9) from _18.01.2023_. This is the last version with the MIT license.
 ### Why choose this fork instead of original version?
 - You need MIT version (obviously).
-- You care about **SetOutputIdentity**. In fork I fixed multiple bugs and added tests for it.
-- This fork fixes numerous issues not fixed in original.
-- Any fix is also automatically propagated to all major versions (v6/7/8). So not only the latest major version receives new fixes.
+- You care about **SetOutputIdentity**. In fork I fixed multiple bugs around setting output identity and added tests for it.
+- This fork fixes numerous issues not fixed in original:
+  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
+  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
+  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1250
+  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+- Any fix is also automatically propagated to all major versions (v6/7/8). All major version receives new fixes.
 - You can easily match version to source code on github (see [GitHub Releases](https://github.com/videokojot/EFCore.BulkExtensions.MIT/releases)).
+- You can see that all the test are passing in the released version (in GitHub Actions or run tests easily locally yourself (just Docker needed))
 ### Why choose original version?
 - You need version below 6.x. My fork supports only EFCore 6+.
+- There might be some new features, missing here. But feel free to create feature request (or even better create PR yourself). 
 ### What's changed?
-- Test are now run using TestContainers, hassle free setup (not local machine setup needed). So any contribution should be very easy.
+- Test are now run using **TestContainers**, hassle free setup (only Docker needed). So any contribution should be very easy.
 - **Tests** are now run as part of release process (see GitHub Actions for yourself).
 - **Tests** are run against all versions, so no regressions should happen.
 

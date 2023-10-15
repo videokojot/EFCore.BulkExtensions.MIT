@@ -165,7 +165,8 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     public override string SelectFromOutputTable(TableInfo tableInfo)
     {
         List<string> columnsNames = tableInfo.OutputPropertyColumnNamesDict.Values.ToList();
-        var query = $"SELECT {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName} WHERE [{tableInfo.PrimaryKeysPropertyColumnNameDict.Select(x => x.Value).FirstOrDefault()}] IS NOT NULL";
+        var query = $"SELECT {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName}"
+                    + (tableInfo.BulkConfig.OutputTableHasSqlActionColumn ? $" WHERE {tableInfo.SqlActionIUD} <> 'D'" : ""); // Filter out the information about deleted rows, not needed for setting output identity
         query = query.Replace("[", "").Replace("]", "");
         return query;
     }
