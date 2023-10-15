@@ -148,8 +148,6 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
                                   c.SetOutputIdentity = true;
                                   c.UpdateByProperties = new List<string> { nameof(SimpleItem.StringProperty), nameof(SimpleItem.Name) };
                                   c.PreserveInsertOrder = true;
-                                  #warning TODO Fix this test
-                                  // c.SetOutputNonIdentityColumns = false; // For case of is ignored
                               });
 
         var fromDb = db.SimpleItems.SingleOrDefault(x => x.GuidProperty == newItem.GuidProperty);
