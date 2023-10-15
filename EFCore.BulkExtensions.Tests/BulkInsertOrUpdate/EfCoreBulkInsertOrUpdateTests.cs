@@ -224,6 +224,36 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         }
     }
 
+    [Theory]
+    [InlineData(DbServerType.SQLServer)]
+    public void BulkInsertOrUpdate_ReloadList_IsWorking(DbServerType dbServerType)
+    {
+        using var db = _dbFixture.GetDb(dbServerType);
+
+        var newItem = new SimpleItem()
+        {
+            StringProperty = "newItem",
+            GuidProperty = new Guid("9f71ff93-2326-44d3-acb6-95b5d0566d68"),
+            Name = "newName",
+        };
+
+        var ensureList = new List<SimpleItem>() { newItem, };
+        
+        db.BulkInsertOrUpdate(ensureList, config =>
+        {
+            config.SetOutputIdentity = true;
+            config.PreserveInsertOrder = false;
+        });
+        
+        Assert.NotSame(ensureList[0], newItem); // Items were reloaded
+        
+        Assert.True(newItem.Id == 0);
+        Assert.True(ensureList[0].Id != 0);
+    }
+    
+    // TODO Add simple scenario test
+    // TODO Add test for case array as a source
+
     private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
     {
         using var db = _dbFixture.GetDb(sqlType);
