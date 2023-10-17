@@ -202,7 +202,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             var ensureList = new[] { updatingItem, };
 
             // We throw we cannot set output identity deterministically.
-            var exception = Assert.Throws<InvalidOperationException>(
+            var exception = Assert.Throws<BulkExtensionsException>(
                 () => db.BulkInsertOrUpdate(ensureList, c =>
                 {
                     c.UpdateByProperties = new List<string> { nameof(SimpleItem.StringProperty), nameof(SimpleItem.BulkIdentifier) };
@@ -210,6 +210,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
                     c.PreserveInsertOrder = true;
                 }));
 
+            Assert.Equal(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties, exception.ExceptionType);
             Assert.StartsWith("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db.", exception.Message);
 
             var bulkItems = GetItemsOfBulk(bulkId, dbType);

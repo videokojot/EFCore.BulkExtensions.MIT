@@ -1107,8 +1107,10 @@ public class TableInfo
 
                 var nonUniqueKeys = entitiesWithOutputIdentity.GroupBy(x => new PrimaryKeysPropertyColumnNameValues(customPK.Select(c => FastPropertyDict[c].Get(x)))).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
 
-                throw new InvalidOperationException("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
-                                                    + "Keys which matched more rows: " + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
+                throw new BulkExtensionsException(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties,
+                                                  "Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
+                                                  + "Keys which matched more rows: "
+                                                  + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
             }
 
             if (tableInfo.EntitiesSortedReference != null)
