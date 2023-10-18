@@ -254,12 +254,12 @@ public static class ContextUtil
             //string connectionString = (new SqliteConnectionStringBuilder { DataSource = $"{databaseName}Lite.db" }).ToString();
             //optionsBuilder.UseSqlite(new SqliteConnection(connectionString));
         }
-        else if (DbServer == DbServerType.PostgreSQL)
+        else if (dbServerType == DbServerType.PostgreSQL)
         {
             string connectionString = GetPostgreSqlConnectionString(databaseName);
             optionsBuilder.UseNpgsql(connectionString);
         }
-        else if (DbServer == DbServerType.MySQL)
+        else if (dbServerType == DbServerType.MySQL)
         {
             string connectionString = GetMySqlConnectionString(databaseName);
             optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
