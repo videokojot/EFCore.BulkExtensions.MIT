@@ -1,4 +1,5 @@
 using EFCore.BulkExtensions.SqlAdapters;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -221,6 +222,33 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             {
                 Assert.Equal(updatingItem.Name, dbItem.Name);
             }
+        }
+    }
+
+    /// <summary>
+    /// Covers: https://github.com/borisdj/EFCore.BulkExtensions/issues/1263
+    /// </summary>
+    [Theory]
+    [InlineData(DbServerType.SQLServer)]
+    public void IUD_KeepIdentity_IdentityDifferentFromKey(DbServerType dbType)
+    {
+        var item = new Entity_KeyDifferentFromIdentity()
+        {
+            ItemTestGid = Guid.NewGuid(),
+            ItemTestIdent = 1234,
+            Name = "1234",
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var items = new[] { item, };
+            db.BulkInsertOrUpdateOrDelete(items, c => { c.SqlBulkCopyOptions = SqlBulkCopyOptions.Default | SqlBulkCopyOptions.KeepIdentity; });
+        }
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var insertedItem = db.EntityKeyDifferentFromIdentities.Single(x => x.ItemTestGid == item.ItemTestGid);
+            Assert.Equal(1234, insertedItem.ItemTestIdent);
         }
     }
 
