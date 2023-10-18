@@ -58,14 +58,13 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         {
             var ensureList = new[] { newItem, updatedItem };
 
-            db.BulkInsertOrUpdate(ensureList, c =>
-            {
-                c.PropertiesToIncludeOnUpdate = new() { "" };
-                // c.PropertiesToIncludeOnCompare = new() { "" };
-            });
+            db.BulkInsertOrUpdate(ensureList,
+                                  c =>
+                                  {
+                                      c.PropertiesToIncludeOnUpdate = new() { "" };
+                                  });
         }
-
-
+        
         var allItems = GetItemsOfBulk(bulkId, dbType);
 
         Assert.Equal(2, allItems.Count);
