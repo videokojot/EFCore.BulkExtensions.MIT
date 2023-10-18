@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)BatchUpdateCreateBodyData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BatchUtil.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BulkConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BulkExtensionsException.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkTransaction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DbContextBulkTransactionGraphUtil.cs" />
