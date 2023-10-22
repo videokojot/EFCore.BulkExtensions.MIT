@@ -240,9 +240,16 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             Name = "1234",
         };
 
+        var item2 = new Entity_KeyDifferentFromIdentity()
+        {
+            ItemTestGid = Guid.NewGuid(),
+            ItemTestIdent = 12345678,
+            Name = "12345678",
+        };
+
         using (var db = _dbFixture.GetDb(dbType))
         {
-            var items = new[] { item, };
+            var items = new[] { item, item2 };
             db.BulkInsertOrUpdateOrDelete(items, c => { c.SqlBulkCopyOptions = SqlBulkCopyOptions.Default | SqlBulkCopyOptions.KeepIdentity; });
         }
 
@@ -250,6 +257,39 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         {
             var insertedItem = db.EntityKeyDifferentFromIdentities.Single(x => x.ItemTestGid == item.ItemTestGid);
             Assert.Equal(1234, insertedItem.ItemTestIdent);
+        }
+    }
+
+    [Theory]
+    [InlineData(DbServerType.SQLServer)]
+    public void IUD_UpdateByCustomColumns_SetOutputIdentity_CustomColumnNames(DbServerType dbType)
+    {
+        var item = new Entity_CustomColumnNames()
+        {
+            CustomColumn = "Value1",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        var item2 = new Entity_CustomColumnNames()
+        {
+            CustomColumn = "Value2",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var items = new[] { item, item2 };
+            db.BulkInsertOrUpdateOrDelete(items, c =>
+            {
+                c.SetOutputIdentity = true;
+                c.UpdateByProperties = new List<string> { nameof(Entity_CustomColumnNames.CustomColumn) };
+            });
+        }
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var insertedItem = db.EntityCustomColumnNames.Single(x => x.GuidProperty == item.GuidProperty);
+            Assert.Equal("Value1", insertedItem.CustomColumn);
         }
     }
 

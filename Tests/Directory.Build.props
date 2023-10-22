@@ -1,6 +1,5 @@
 <Project>
     <PropertyGroup>
-        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <NoWarn>$(NoWarn);CA2007;EF1002</NoWarn>
