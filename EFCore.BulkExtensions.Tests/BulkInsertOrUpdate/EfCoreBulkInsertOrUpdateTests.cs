@@ -21,7 +21,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
+    /// Covers issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/46
+    /// Original: https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -54,7 +55,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
+    /// Covers issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/45
+    /// Original: https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -158,7 +160,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+    /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/48
+    /// Original issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -240,9 +243,16 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             Name = "1234",
         };
 
+        var item2 = new Entity_KeyDifferentFromIdentity()
+        {
+            ItemTestGid = Guid.NewGuid(),
+            ItemTestIdent = 12345678,
+            Name = "12345678",
+        };
+
         using (var db = _dbFixture.GetDb(dbType))
         {
-            var items = new[] { item, };
+            var items = new[] { item, item2 };
             db.BulkInsertOrUpdateOrDelete(items, c => { c.SqlBulkCopyOptions = SqlBulkCopyOptions.Default | SqlBulkCopyOptions.KeepIdentity; });
         }
 
@@ -250,6 +260,42 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         {
             var insertedItem = db.EntityKeyDifferentFromIdentities.Single(x => x.ItemTestGid == item.ItemTestGid);
             Assert.Equal(1234, insertedItem.ItemTestIdent);
+        }
+    }
+
+    /// <summary>
+    /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/62
+    /// </summary>
+    [Theory]
+    [InlineData(DbServerType.SQLServer)]
+    public void IUD_UpdateByCustomColumns_SetOutputIdentity_CustomColumnNames(DbServerType dbType)
+    {
+        var item = new Entity_CustomColumnNames()
+        {
+            CustomColumn = "Value1",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        var item2 = new Entity_CustomColumnNames()
+        {
+            CustomColumn = "Value2",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var items = new[] { item, item2 };
+            db.BulkInsertOrUpdateOrDelete(items, c =>
+            {
+                c.SetOutputIdentity = true;
+                c.UpdateByProperties = new List<string> { nameof(Entity_CustomColumnNames.CustomColumn) };
+            });
+        }
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var insertedItem = db.EntityCustomColumnNames.Single(x => x.GuidProperty == item.GuidProperty);
+            Assert.Equal("Value1", insertedItem.CustomColumn);
         }
     }
 

@@ -1076,7 +1076,7 @@ public class TableInfo
             }
             
             
-            var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Values;
+            var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Keys;
 
             if (countDiff < 0)
             {
