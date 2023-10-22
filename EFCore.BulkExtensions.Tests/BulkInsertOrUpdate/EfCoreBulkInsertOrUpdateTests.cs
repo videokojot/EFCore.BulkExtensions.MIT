@@ -21,7 +21,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
+    /// Covers issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/46
+    /// Original: https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -54,7 +55,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
+    /// Covers issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/45
+    /// Original: https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -158,7 +160,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     }
 
     /// <summary>
-    /// Covers: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+    /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/48
+    /// Original issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
@@ -260,6 +263,9 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         }
     }
 
+    /// <summary>
+    /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/62
+    /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
     public void IUD_UpdateByCustomColumns_SetOutputIdentity_CustomColumnNames(DbServerType dbType)
