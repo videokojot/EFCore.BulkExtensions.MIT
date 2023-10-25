@@ -86,7 +86,7 @@ public class TableInfo
 
     public DbTransaction? DbTransaction { get; set; }
     
-    public string SqlActionIUD => "MergeActionIUD";
+    public string SqlActionIUD => "EFCore_BulkExtensions_MIT_MergeActionIUD";
 
  
 #pragma warning restore CS1591 // No XML comments required here.
@@ -767,77 +767,11 @@ public class TableInfo
         }
     }
 
-    /// <summary>
-    /// Checks the number of updated entities
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    protected async Task<int> GetNumberUpdatedAsync(DbContext context, bool isAsync, CancellationToken cancellationToken)
-    {
-        var resultParameter = (IDbDataParameter?)Activator.CreateInstance(typeof(Microsoft.Data.SqlClient.SqlParameter));
-        if (resultParameter is null)
-        {
-            throw new ArgumentException("Unable to create an instance of IDbDataParameter");
-        }
-        resultParameter.ParameterName = "@result";
-        resultParameter.DbType = DbType.Int32;
-        resultParameter.Direction = ParameterDirection.Output;
-        string sqlQueryCount = SqlQueryBuilder.SelectCountIsUpdateFromOutputTable(this);
-
-        var sqlSetResult = $"SET @result = ({sqlQueryCount});";
-        if (isAsync)
-        {
-            await context.Database.ExecuteSqlRawAsync(sqlSetResult, new object[] { resultParameter }, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.ExecuteSqlRaw(sqlSetResult, resultParameter);
-        }
-        return (int)resultParameter.Value!;
-    }
-
-    /// <summary>
-    /// Checks the number of deleted entities
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    protected async Task<int> GetNumberDeletedAsync(DbContext context, bool isAsync, CancellationToken cancellationToken)
-    {
-        var resultParameter = (IDbDataParameter?)Activator.CreateInstance(typeof(Microsoft.Data.SqlClient.SqlParameter));
-        if (resultParameter is null)
-        {
-            throw new ArgumentException("Unable to create an instance of IDbDataParameter");
-        }
-        resultParameter.ParameterName = "@result";
-        resultParameter.DbType = DbType.Int32;
-        resultParameter.Direction = ParameterDirection.Output;
-        string sqlQueryCount = SqlQueryBuilder.SelectCountIsDeleteFromOutputTable(this);
-
-        var sqlSetResult = $"SET @result = ({sqlQueryCount});";
-        if (isAsync)
-        {
-            await context.Database.ExecuteSqlRawAsync(sqlSetResult, new object[] { resultParameter }, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.ExecuteSqlRaw(sqlSetResult, resultParameter);
-        }
-        return (int)resultParameter.Value!;
-    }
-
     #endregion
 
     /// <summary>
     /// Returns the unique property values
     /// </summary>
-    /// <param name="entity"></param>
-    /// <param name="propertiesNames"></param>
-    /// <param name="fastPropertyDict"></param>
-    /// <returns></returns>
     public static string GetUniquePropertyValues(object entity, List<string> propertiesNames, Dictionary<string, FastProperty> fastPropertyDict)
     {
         StringBuilder uniqueBuilder = new(1024);
@@ -945,6 +879,7 @@ public class TableInfo
         }
     }
     #endregion
+    
     /// <summary>
     /// Sets the identity preserve order
     /// </summary>
@@ -1029,13 +964,8 @@ public class TableInfo
     }
 
     /// <summary>
-    /// Loads the ouput entities
+    /// Loads the output entities
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="sqlSelect"></param>
-    /// <returns></returns>
     public List<T> LoadOutputEntities<T>(DbContext context, Type type, string sqlSelect) where T : class
     {
         List<T> existingEntities;

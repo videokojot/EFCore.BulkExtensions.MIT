@@ -56,6 +56,7 @@
         <Compile Include="..\..\EFCore.BulkExtensions.Tests\**\*.cs"/>
 
         <None Include="..\..\EFCore.BulkExtensions.Tests\**\*.json"/>
+        
         <Compile Remove="..\..\EFCore.BulkExtensions.Tests\bin\**"/>
         <Compile Remove="..\..\EFCore.BulkExtensions.Tests\obj\**"/>
 
