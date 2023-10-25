@@ -39,9 +39,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to alter table columns to nullables
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public static string AlterTableColumnsToNullable(string tableName, TableInfo tableInfo)
     {
         string q = "";
@@ -55,48 +52,11 @@ public abstract class SqlQueryBuilder
         }
         return q;
     }
-
-    // Not used for TableCopy since order of columns is not the same as of original table, that is required for the MERGE (instead after creation, columns are Altered to Nullable)
-    /// <summary>
-    /// Generates SQL query to create table
-    /// </summary>
-    /// <param name="newTableName"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="isOutputTable"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public static string CreateTable(string newTableName, TableInfo tableInfo, bool isOutputTable = false)
-    {
-        List<string> columnsNames = (isOutputTable ? tableInfo.OutputPropertyColumnNamesDict : tableInfo.PropertyColumnNamesDict).Values.ToList();
-        if (tableInfo.TimeStampColumnName != null)
-        {
-            columnsNames.Remove(tableInfo.TimeStampColumnName);
-        }
-        var columnsNamesAndTypes = new List<Tuple<string, string>>();
-        foreach (var columnName in columnsNames)
-        {
-            if (!tableInfo.ColumnNamesTypesDict.TryGetValue(columnName, out string? columnType))
-            {
-                throw new InvalidOperationException($"Column Type not found in ColumnNamesTypesDict for column: '{columnName}'");
-            }
-            columnsNamesAndTypes.Add(new Tuple<string, string>(columnName, columnType));
-        }
-        if (tableInfo.BulkConfig.CalculateStats && isOutputTable)
-        {
-            columnsNamesAndTypes.Add(new Tuple<string, string>("[IsUpdate]", "bit"));
-            columnsNamesAndTypes.Add(new Tuple<string, string>("[IsDelete]", "bit"));
-        }
-        var q = $"CREATE TABLE {newTableName} ({GetCommaSeparatedColumnsAndTypes(columnsNamesAndTypes)});";
-        return q;
-    }
+    
 
     /// <summary>
     /// Generates SQL query to add a column
     /// </summary>
-    /// <param name="fullTableName"></param>
-    /// <param name="columnName"></param>
-    /// <param name="columnType"></param>
-    /// <returns></returns>
     public static string AddColumn(string fullTableName, string columnName, string columnType)
     {
         var q = $"ALTER TABLE {fullTableName} ADD [{columnName}] {columnType};";
@@ -106,8 +66,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to select output from a table
     /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public static string SelectFromOutputTable(TableInfo tableInfo)
     {
         List<string> columnsNames = tableInfo.OutputPropertyColumnNamesDict.Values.ToList();
@@ -115,26 +73,6 @@ public abstract class SqlQueryBuilder
                 + (tableInfo.BulkConfig.OutputTableHasSqlActionColumn ? $" WHERE {tableInfo.SqlActionIUD} <> 'D'" : ""); 
         // Filter out the information about deleted rows (since we do not care about them when setting the output identity etc.)
         return q;
-    }
-
-    /// <summary>
-    /// Generates SQL query to select count updated from output table
-    /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
-    public static string SelectCountIsUpdateFromOutputTable(TableInfo tableInfo)
-    {
-        return SelectCountColumnFromOutputTable(tableInfo, "IsUpdate");
-    }
-
-    /// <summary>
-    /// Generates SQL query to select count deleted from output table
-    /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
-    public static string SelectCountIsDeleteFromOutputTable(TableInfo tableInfo)
-    {
-        return SelectCountColumnFromOutputTable(tableInfo, "IsDelete");
     }
 
     /// <summary>
