@@ -23,11 +23,6 @@ namespace EFCore.BulkExtensions;
 /// </summary>
 public class TableInfo
 {
-
-    public TableInfo()
-    {
-        
-    }
     public string? Schema { get; set; }
     public string SchemaFormated => Schema != null ? $"[{Schema}]." : "";
     public string? TempSchema { get; set; }
@@ -99,12 +94,12 @@ public class TableInfo
         var tableInfo = new TableInfo
         {
             NumberOfEntities = entities.Count,
-            BulkConfig = bulkConfig ?? new BulkConfig() { }
+            BulkConfig = bulkConfig ?? new BulkConfig(),
         };
         tableInfo.BulkConfig.OperationType = operationType;
 
         bool isExplicitTransaction = context.Database.GetDbConnection().State == ConnectionState.Open;
-        if (tableInfo.BulkConfig.UseTempDB == true && !isExplicitTransaction && (operationType != OperationType.Insert || tableInfo.BulkConfig.SetOutputIdentity))
+        if (tableInfo.BulkConfig.UseTempDB && !isExplicitTransaction && (operationType != OperationType.Insert || tableInfo.BulkConfig.SetOutputIdentity))
         {
             throw new InvalidOperationException("When 'UseTempDB' is set then BulkOperation has to be inside Transaction. " +
                                                 "Otherwise destination table gets dropped too early because transaction ends before operation is finished."); // throws: 'Cannot access destination table'
@@ -552,16 +547,18 @@ public class TableInfo
                     var ownedProperties = property.PropertyType.GetProperties();
                     foreach (var ownedProperty in ownedProperties)
                     {
-                        if (ownedEntityPropertyNameColumnNameDict.ContainsKey(ownedProperty.Name))
+                        if (ownedEntityPropertyNameColumnNameDict.TryGetValue(ownedProperty.Name, out var columnName))
                         {
                             string ownedPropertyFullName = property.Name + "." + ownedProperty.Name;
                             var ownedPropertyType = Nullable.GetUnderlyingType(ownedProperty.PropertyType) ?? ownedProperty.PropertyType;
 
                             bool doAddProperty = true;
+                            
                             if (AreSpecifiedPropertiesToInclude && !(BulkConfig.PropertiesToInclude?.Contains(ownedPropertyFullName) ?? false))
                             {
                                 doAddProperty = false;
                             }
+                            
                             if (AreSpecifiedPropertiesToExclude && (BulkConfig.PropertiesToExclude?.Contains(ownedPropertyFullName) ?? false))
                             {
                                 doAddProperty = false;
@@ -569,7 +566,6 @@ public class TableInfo
 
                             if (doAddProperty)
                             {
-                                string columnName = ownedEntityPropertyNameColumnNameDict[ownedProperty.Name];
                                 PropertyColumnNamesDict.Add(ownedPropertyFullName, columnName);
                                 PropertyColumnNamesCompareDict.Add(ownedPropertyFullName, columnName);
                                 PropertyColumnNamesUpdateDict.Add(ownedPropertyFullName, columnName);
@@ -616,69 +612,6 @@ public class TableInfo
     /// <summary>
     /// Checks if the table exists
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    public static async Task<bool> CheckTableExistAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
-    {
-        if (isAsync)
-        {
-            await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.OpenConnection();
-        }
-
-        bool tableExist = false;
-        try
-        {
-            var sqlConnection = context.Database.GetDbConnection();
-            var currentTransaction = context.Database.CurrentTransaction;
-
-            using var command = sqlConnection.CreateCommand();
-            if (currentTransaction != null)
-                command.Transaction = currentTransaction.GetDbTransaction();
-            command.CommandText = SqlQueryBuilder.CheckTableExist(tableInfo.FullTempTableName, tableInfo.BulkConfig.UseTempDB);
-
-            if (isAsync)
-            {
-                using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                if (reader.HasRows)
-                {
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-            else
-            {
-                using var reader = command.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-        }
-        finally
-        {
-            if (isAsync)
-            {
-                await context.Database.CloseConnectionAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                context.Database.CloseConnection();
-            }
-        }
-        return tableExist;
-    }
 
     public record struct MergeActionCounts(int Inserted, int Updated, int Deleted);
 
@@ -893,7 +826,7 @@ public class TableInfo
                                                   PrimaryKeysPropertyColumnNameDict?.Select(a => a.Value).First() == IdentityColumnName;
 
         var operationType = tableInfo.BulkConfig.OperationType;
-        if (doSetIdentityColumnsForInsertOrder == true)
+        if (doSetIdentityColumnsForInsertOrder)
         {
             if (operationType == OperationType.Insert) // Insert should either have all zeros for automatic order, or they can be manually set
             {
@@ -913,7 +846,6 @@ public class TableInfo
                                 (operationType == OperationType.Update || operationType == OperationType.InsertOrUpdate || operationType == OperationType.InsertOrUpdateOrDelete);
             var entitiesExistingDict = new Dictionary<long, T>();
             var entitiesNew = new List<T>();
-            var entitiesSorted = new List<T>();
 
             long i = -entities.Count;
             foreach (var entity in entities)
@@ -956,7 +888,7 @@ public class TableInfo
             }
             if (sortEntities)
             {
-                entitiesSorted = entitiesExistingDict.OrderBy(a => a.Key).Select(a => a.Value).ToList();
+                List<T> entitiesSorted = entitiesExistingDict.OrderBy(a => a.Key).Select(a => a.Value).ToList();
                 entitiesSorted.AddRange(entitiesNew); // then append new ones
                 tableInfo.EntitiesSortedReference = entitiesSorted.Cast<object>().ToList();
             }
@@ -1000,7 +932,7 @@ public class TableInfo
                 tableInfo.BulkConfig.TimeStampInfo = new TimeStampInfo
                 {
                     NumberOfSkippedForUpdate = countDiff,
-                    EntitiesOutput = entitiesWithOutputIdentity.Cast<object>().ToList()
+                    EntitiesOutput = entitiesWithOutputIdentity.ToList()
                 };
                 return;
             }
@@ -1111,22 +1043,12 @@ public class TableInfo
     // Once the following Issue gets fixed(expected in EF 3.0) this can be replaced with code segment: DirectQuery
     // https://github.com/aspnet/EntityFrameworkCore/issues/12905
     #region CompiledQuery
-    /// <summary>
-    /// Loads the output data
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
+
     public async Task LoadOutputDataAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken) where T : class
     {
         bool hasIdentity = OutputPropertyColumnNamesDict.Any(a => a.Value == IdentityColumnName) ||
                            (tableInfo.HasSinglePrimaryKey && tableInfo.DefaultValueProperties.Contains(tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key));
-        int totalNumber = entities.Count;
+
         if (BulkConfig.SetOutputIdentity && hasIdentity)
         {
             var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
@@ -1161,10 +1083,6 @@ public class TableInfo
     /// <summary>
     /// Queries the output table data
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="sqlQuery"></param>
-    /// <returns></returns>
     protected IEnumerable QueryOutputTable(DbContext context, Type type, string sqlQuery)
     {
         var compiled = EF.CompileQuery(GetQueryExpression(type, sqlQuery));
@@ -1189,13 +1107,9 @@ public class TableInfo
     /// <summary>
     /// Returns an expression for the SQL query
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="sqlQuery"></param>
-    /// <param name="ordered"></param>
-    /// <returns></returns>
     public Expression<Func<DbContext, IQueryable<T>>> GetQueryExpression<T>(string sqlQuery, bool ordered = true) where T : class
     {
-        Expression<Func<DbContext, IQueryable<T>>>? expression = null;
+        Expression<Func<DbContext, IQueryable<T>>>? expression;
         if (BulkConfig.TrackingEntities) // If Else can not be replaced with Ternary operator for Expression
         {
             expression = BulkConfig.IgnoreGlobalQueryFilters ?
@@ -1219,10 +1133,6 @@ public class TableInfo
     /// <summary>
     /// Returns an expression for the SQL query
     /// </summary>
-    /// <param name="entityType"></param>
-    /// <param name="sqlQuery"></param>
-    /// <param name="ordered"></param>
-    /// <returns></returns>
     public Expression<Func<DbContext, IEnumerable>> GetQueryExpression(Type entityType, string sqlQuery, bool ordered = true)
     {
         var parameter = Expression.Parameter(typeof(DbContext), "ctx");
