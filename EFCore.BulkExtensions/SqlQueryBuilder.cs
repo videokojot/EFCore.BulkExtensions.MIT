@@ -9,33 +9,8 @@ namespace EFCore.BulkExtensions;
 /// <summary>
 /// Contains a compilation of SQL queries used in EFCore.
 /// </summary>
-public abstract class SqlQueryBuilder
+public static class SqlQueryBuilder
 {
-    /// <summary>
-    /// Generates SQL query to create a table copy
-    /// </summary>
-    /// <param name="existingTableName"></param>
-    /// <param name="newTableName"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="isOutputTable"></param>
-    /// <returns></returns>
-    public static string CreateTableCopy(string existingTableName, string newTableName, TableInfo tableInfo, bool isOutputTable = false)
-    {
-        // TODO: (optionaly) if CalculateStats = True but SetOutputIdentity = False then Columns could be ommited from Create and from MergeOutput
-        List<string> columnsNames = (isOutputTable ? tableInfo.OutputPropertyColumnNamesDict : tableInfo.PropertyColumnNamesDict).Values.ToList();
-        if (tableInfo.TimeStampColumnName != null)
-        {
-            columnsNames.Remove(tableInfo.TimeStampColumnName);
-        }
-        
-        string statsColumn = (tableInfo.BulkConfig.OutputTableHasSqlActionColumn && isOutputTable) ? $", [{tableInfo.SqlActionIUD}] = CAST('' AS char(1)) " : "";
-
-        var q = $"SELECT TOP 0 {GetCommaSeparatedColumns(columnsNames, "T")} " + statsColumn +
-                $"INTO {newTableName} FROM {existingTableName} AS T " +
-                $"LEFT JOIN {existingTableName} AS Source ON 1 = 0;"; // removes Identity constrain
-        return q;
-    }
-
     /// <summary>
     /// Generates SQL query to alter table columns to nullables
     /// </summary>
@@ -53,7 +28,8 @@ public abstract class SqlQueryBuilder
         return q;
     }
     
-
+    
+    
     /// <summary>
     /// Generates SQL query to add a column
     /// </summary>
@@ -76,22 +52,8 @@ public abstract class SqlQueryBuilder
     }
 
     /// <summary>
-    /// Generates SQL query to select column count from output table
-    /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <param name="columnName"></param>
-    /// <returns></returns>
-    public static string SelectCountColumnFromOutputTable(TableInfo tableInfo, string columnName)
-    {
-        var q = $"SELECT COUNT(*) FROM {tableInfo.FullTempOutputTableName} WHERE [{columnName}] = 1";
-        return q;
-    }
-
-    /// <summary>
     /// Generates SQL query to drop table
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="isTempTable"></param>
     /// <returns></returns>
     public static string DropTable(string tableName, bool isTempTable)
     {
@@ -108,25 +70,8 @@ public abstract class SqlQueryBuilder
     }
 
     /// <summary>
-    /// Generates SQL query to to select identity column
-    /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="schemaName"></param>
-    /// <returns></returns>
-    public static string SelectIdentityColumnName(string tableName, string schemaName) // No longer used
-    {
-        var q = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
-                $"WHERE COLUMNPROPERTY(OBJECT_ID(TABLE_SCHEMA + '.' + TABLE_NAME), COLUMN_NAME, 'IsIdentity') = 1 " +
-                $"AND TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = '{schemaName}'";
-        return q;
-    }
-
-    /// <summary>
     /// Generates SQL query to check whether a table exists
     /// </summary>
-    /// <param name="fullTableName"></param>
-    /// <param name="isTempTable"></param>
-    /// <returns></returns>
     public static string CheckTableExist(string fullTableName, bool isTempTable)
     {
         string q;
@@ -144,8 +89,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to join table
     /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public static string SelectJoinTable(TableInfo tableInfo)
     {
         string sourceTable = tableInfo.FullTableName;
@@ -162,8 +105,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to set identity insert
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="identityInsert"></param>
     /// <returns></returns>
     public static string SetIdentityInsert(string tableName, bool identityInsert)
     {
@@ -175,13 +116,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to merge table
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="operationType"></param>
-    /// <param name="entityPropertyWithDefaultValue"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidBulkConfigException"></exception>
     public static (string sql, IEnumerable<object> parameters) MergeTable<T>(DbContext? context, TableInfo tableInfo, OperationType operationType, IEnumerable<string>? entityPropertyWithDefaultValue = default) where T : class
     {
         List<object> parameters = new();
@@ -356,8 +290,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to truncate table
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <returns></returns>
     public static string TruncateTable(string tableName)
     {
         var q = $"TRUNCATE TABLE {tableName};";
@@ -380,11 +312,6 @@ public abstract class SqlQueryBuilder
     /// <summary>
     /// Generates SQL query to get comma seperated column
     /// </summary>
-    /// <param name="columnsNames"></param>
-    /// <param name="prefixTable"></param>
-    /// <param name="equalsTable"></param>
-    /// <param name="propertColumnsNamesDict"></param>
-    /// <returns></returns>
     public static string GetCommaSeparatedColumns(List<string> columnsNames, string? prefixTable = null, string? equalsTable = null, Dictionary<string, string>? propertColumnsNamesDict = null)
     {
         prefixTable += (prefixTable != null && prefixTable != "@") ? "." : "";
@@ -405,35 +332,9 @@ public abstract class SqlQueryBuilder
         return commaSeparatedColumns;
     }
 
-
-    /// <summary>
-    /// Generates a comma seperated column list with its SQL data type
-    /// </summary>
-    /// <param name="columnsNamesAndTypes"></param>
-    /// <returns></returns>
-    public static string GetCommaSeparatedColumnsAndTypes(List<Tuple<string, string>> columnsNamesAndTypes)
-    {
-        string commaSeparatedColumns = "";
-        foreach (var columnNameAndType in columnsNamesAndTypes)
-        {
-            commaSeparatedColumns += $"[{columnNameAndType.Item1}] {columnNameAndType.Item2}, ";
-        }
-        if (commaSeparatedColumns != "")
-        {
-            commaSeparatedColumns = commaSeparatedColumns.Remove(commaSeparatedColumns.Length - 2, 2); // removes last excess comma and space: ", "
-        }
-        return commaSeparatedColumns;
-    }
-
     /// <summary>
     /// Generates SQL query to seperate columns
     /// </summary>
-    /// <param name="columnsNames"></param>
-    /// <param name="prefixTable"></param>
-    /// <param name="equalsTable"></param>
-    /// <param name="updateByPropertiesAreNullable"></param>
-    /// <param name="propertColumnsNamesDict"></param>
-    /// <returns></returns>
     public static string GetANDSeparatedColumns(List<string> columnsNames, string? prefixTable = null, string? equalsTable = null, bool updateByPropertiesAreNullable = false, Dictionary<string, string>? propertColumnsNamesDict = null)
     {
         string commaSeparatedColumns = GetCommaSeparatedColumns(columnsNames, prefixTable, equalsTable, propertColumnsNamesDict);
