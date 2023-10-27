@@ -219,7 +219,7 @@ public class TableInfo
                 var columnType = firstMapping?.Column.StoreType;
                 if ((columnType?.StartsWith("datetime2(") ?? false) && (!columnType?.EndsWith("7)") ?? false))
                 {
-                    string precisionText = columnType.Substring(10, 1);
+                    string precisionText = columnType!.Substring(10, 1);
                     int precision = int.Parse(precisionText);
                     DateTime2PropertiesPrecisionLessThen7Dict.Add(firstMapping!.Property.Name, precision); // SqlBulkCopy does Floor instead of Round so Rounding done in memory
                 }
@@ -612,64 +612,6 @@ public class TableInfo
     /// <summary>
     /// Checks if the table exists
     /// </summary>
-    public static async Task<bool> CheckTableExistAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
-    {
-        if (isAsync)
-        {
-            await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.OpenConnection();
-        }
-
-        bool tableExist = false;
-        try
-        {
-            var sqlConnection = context.Database.GetDbConnection();
-            var currentTransaction = context.Database.CurrentTransaction;
-
-            using var command = sqlConnection.CreateCommand();
-            if (currentTransaction != null)
-                command.Transaction = currentTransaction.GetDbTransaction();
-            command.CommandText = SqlQueryBuilder.CheckTableExist(tableInfo.FullTempTableName, tableInfo.BulkConfig.UseTempDB);
-
-            if (isAsync)
-            {
-                using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                if (reader.HasRows)
-                {
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-            else
-            {
-                using var reader = command.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-        }
-        finally
-        {
-            if (isAsync)
-            {
-                await context.Database.CloseConnectionAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                context.Database.CloseConnection();
-            }
-        }
-        return tableExist;
-    }
 
     public record struct MergeActionCounts(int Inserted, int Updated, int Deleted);
 

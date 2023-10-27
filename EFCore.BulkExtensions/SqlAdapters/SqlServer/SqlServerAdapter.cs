@@ -49,6 +49,82 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
         await InsertAsync(context, type, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
     
+    private static string CheckTableExist(string fullTableName, bool isTempTable)
+    {
+        string q;
+        if (isTempTable)
+        {
+            q = $"IF OBJECT_ID ('tempdb..[#{fullTableName.Split('#')[1]}', 'U') IS NOT NULL SELECT 1 AS res ELSE SELECT 0 AS res;";
+        }
+        else
+        {
+            q = $"IF OBJECT_ID ('{fullTableName}', 'U') IS NOT NULL SELECT 1 AS res ELSE SELECT 0 AS res;";
+        }
+        return q;
+    }
+    
+    private static string TruncateTable(string tableName) => $"TRUNCATE TABLE {tableName};";
+
+    private static async Task<bool> CheckTableExistAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
+    {
+        if (isAsync)
+        {
+            await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            context.Database.OpenConnection();
+        }
+
+        bool tableExist = false;
+        try
+        {
+            var sqlConnection = context.Database.GetDbConnection();
+            var currentTransaction = context.Database.CurrentTransaction;
+
+            using var command = sqlConnection.CreateCommand();
+            if (currentTransaction != null)
+                command.Transaction = currentTransaction.GetDbTransaction();
+            command.CommandText = CheckTableExist(tableInfo.FullTempTableName, tableInfo.BulkConfig.UseTempDB);
+
+            if (isAsync)
+            {
+                using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+                if (reader.HasRows)
+                {
+                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        tableExist = (int)reader[0] == 1;
+                    }
+                }
+            }
+            else
+            {
+                using var reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        tableExist = (int)reader[0] == 1;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            if (isAsync)
+            {
+                await context.Database.CloseConnectionAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                context.Database.CloseConnection();
+            }
+        }
+        return tableExist;
+    }
+
+    
     private static async Task InsertAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
     {
         tableInfo.CheckToSetIdentityForPreserveOrder(tableInfo, entities);
@@ -85,8 +161,8 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             {
                 if (ex.Message.Contains(BulkExceptionMessage.ColumnMappingNotMatch))
                 {
-                    bool tableExist = isAsync ? await TableInfo.CheckTableExistAsync(context, tableInfo, isAsync: true, cancellationToken).ConfigureAwait(false)
-                                                    : TableInfo.CheckTableExistAsync(context, tableInfo, isAsync: false, cancellationToken).GetAwaiter().GetResult();
+                    bool tableExist = isAsync ? await CheckTableExistAsync(context, tableInfo, isAsync: true, cancellationToken).ConfigureAwait(false)
+                                                    : CheckTableExistAsync(context, tableInfo, isAsync: false, cancellationToken).GetAwaiter().GetResult();
 
                     if (!tableExist)
                     {
@@ -137,6 +213,23 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
         await MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
     
+    /// <summary>
+    /// Generates SQL query to alter table columns to nullables
+    /// </summary>
+    private static string AlterTableColumnsToNullable(string tableName, TableInfo tableInfo)
+    {
+        string q = "";
+        foreach (var column in tableInfo.ColumnNamesTypesDict)
+        {
+            string columnName = column.Key;
+            string columnType = column.Value;
+            if (columnName == tableInfo.TimeStampColumnName)
+                columnType = TableInfo.TimeStampOutColumnType;
+            q += $"ALTER TABLE {tableName} ALTER COLUMN [{columnName}] {columnType}; ";
+        }
+        return q;
+    }
+    
     private async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken) where T : class
     {
         var entityPropertyWithDefaultValue = entities.GetPropertiesWithDefaultValue(type, tableInfo);
@@ -172,7 +265,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
 
             if (tableInfo.TimeStampColumnName != null)
             {
-                var sqlAddColumn = SqlQueryBuilder.AddColumn(tableInfo.FullTempTableName, tableInfo.TimeStampColumnName, TableInfo.TimeStampOutColumnType);
+                var sqlAddColumn = AddColumn(tableInfo.FullTempTableName, tableInfo.TimeStampColumnName, TableInfo.TimeStampOutColumnType);
                 if (isAsync)
                 {
                     await context.Database.ExecuteSqlRawAsync(sqlAddColumn, cancellationToken).ConfigureAwait(false);
@@ -198,7 +291,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
 
             if (tableInfo.TimeStampColumnName != null)
             {
-                var sqlAddColumn = SqlQueryBuilder.AddColumn(tableInfo.FullTempOutputTableName, tableInfo.TimeStampColumnName, TableInfo.TimeStampOutColumnType);
+                var sqlAddColumn = AddColumn(tableInfo.FullTempOutputTableName, tableInfo.TimeStampColumnName, TableInfo.TimeStampOutColumnType);
                 if (isAsync)
                 {
                     await context.Database.ExecuteSqlRawAsync(sqlAddColumn, cancellationToken).ConfigureAwait(false);
@@ -212,7 +305,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             if (operationType == OperationType.InsertOrUpdateOrDelete)
             {
                 // Output returns all changes including Deleted rows with all NULL values, so if TempOutput.Id col not Nullable it breaks
-                var sqlAlterTableColumnsToNullable = SqlQueryBuilder.AlterTableColumnsToNullable(tableInfo.FullTempOutputTableName, tableInfo);
+                var sqlAlterTableColumnsToNullable = AlterTableColumnsToNullable(tableInfo.FullTempOutputTableName, tableInfo);
                 if (isAsync)
                 {
                     await context.Database.ExecuteSqlRawAsync(sqlAlterTableColumnsToNullable, cancellationToken).ConfigureAwait(false);
@@ -241,7 +334,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
 
             if (keepIdentity && tableInfo.HasIdentity)
             {
-                var sqlSetIdentityInsertTrue = SqlQueryBuilder.SetIdentityInsert(tableInfo.FullTableName, true);
+                var sqlSetIdentityInsertTrue = SetIdentityInsert(tableInfo.FullTableName, true);
                 if (isAsync)
                 {
                     await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -309,7 +402,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
 
             if (keepIdentity && tableInfo.HasIdentity)
             {
-                var sqlSetIdentityInsertFalse = SqlQueryBuilder.SetIdentityInsert(tableInfo.FullTableName, false);
+                var sqlSetIdentityInsertFalse = SetIdentityInsert(tableInfo.FullTableName, false);
                 if (isAsync)
                 {
                     await context.Database.ExecuteSqlRawAsync(sqlSetIdentityInsertFalse, cancellationToken).ConfigureAwait(false);
@@ -403,20 +496,22 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             }
         }
     }
+    
+    private static string SetIdentityInsert(string tableName, bool identityInsert)
+    {
+        string ON_OFF = identityInsert ? "ON" : "OFF";
+        var q = $"SET IDENTITY_INSERT {tableName} {ON_OFF};";
+        return q;
+    }
+    
+    private static string AddColumn(string fullTableName, string columnName, string columnType) => $"ALTER TABLE {fullTableName} ADD [{columnName}] {columnType};";
 
     /// <inheritdoc/>
-    public void Truncate(DbContext context, TableInfo tableInfo)
-    {
-        var sqlTruncateTable = SqlQueryBuilder.TruncateTable(tableInfo.FullTableName);
-        context.Database.ExecuteSqlRaw(sqlTruncateTable);
-    }
+    public void Truncate(DbContext context, TableInfo tableInfo) => context.Database.ExecuteSqlRaw(TruncateTable(tableInfo.FullTableName));
 
     /// <inheritdoc/>
-    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken)
-    {
-        var sqlTruncateTable = SqlQueryBuilder.TruncateTable(tableInfo.FullTableName);
-        await context.Database.ExecuteSqlRawAsync(sqlTruncateTable, cancellationToken).ConfigureAwait(false);
-    }
+    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken) => await context.Database.ExecuteSqlRawAsync(TruncateTable(tableInfo.FullTableName), cancellationToken).ConfigureAwait(false);
+
     #endregion
 
     #region Connection

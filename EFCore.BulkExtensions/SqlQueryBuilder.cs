@@ -12,34 +12,6 @@ namespace EFCore.BulkExtensions;
 public static class SqlQueryBuilder
 {
     /// <summary>
-    /// Generates SQL query to alter table columns to nullables
-    /// </summary>
-    public static string AlterTableColumnsToNullable(string tableName, TableInfo tableInfo)
-    {
-        string q = "";
-        foreach (var column in tableInfo.ColumnNamesTypesDict)
-        {
-            string columnName = column.Key;
-            string columnType = column.Value;
-            if (columnName == tableInfo.TimeStampColumnName)
-                columnType = TableInfo.TimeStampOutColumnType;
-            q += $"ALTER TABLE {tableName} ALTER COLUMN [{columnName}] {columnType}; ";
-        }
-        return q;
-    }
-    
-    
-    
-    /// <summary>
-    /// Generates SQL query to add a column
-    /// </summary>
-    public static string AddColumn(string fullTableName, string columnName, string columnType)
-    {
-        var q = $"ALTER TABLE {fullTableName} ADD [{columnName}] {columnType};";
-        return q;
-    }
-
-    /// <summary>
     /// Generates SQL query to select output from a table
     /// </summary>
     public static string SelectFromOutputTable(TableInfo tableInfo)
@@ -70,23 +42,6 @@ public static class SqlQueryBuilder
     }
 
     /// <summary>
-    /// Generates SQL query to check whether a table exists
-    /// </summary>
-    public static string CheckTableExist(string fullTableName, bool isTempTable)
-    {
-        string q;
-        if (isTempTable)
-        {
-            q = $"IF OBJECT_ID ('tempdb..[#{fullTableName.Split('#')[1]}', 'U') IS NOT NULL SELECT 1 AS res ELSE SELECT 0 AS res;";
-        }
-        else
-        {
-            q = $"IF OBJECT_ID ('{fullTableName}', 'U') IS NOT NULL SELECT 1 AS res ELSE SELECT 0 AS res;";
-        }
-        return q;
-    }
-
-    /// <summary>
     /// Generates SQL query to join table
     /// </summary>
     public static string SelectJoinTable(TableInfo tableInfo)
@@ -102,20 +57,6 @@ public static class SqlQueryBuilder
         return q;
     }
 
-    /// <summary>
-    /// Generates SQL query to set identity insert
-    /// </summary>
-    /// <returns></returns>
-    public static string SetIdentityInsert(string tableName, bool identityInsert)
-    {
-        string ON_OFF = identityInsert ? "ON" : "OFF";
-        var q = $"SET IDENTITY_INSERT {tableName} {ON_OFF};";
-        return q;
-    }
-
-    /// <summary>
-    /// Generates SQL query to merge table
-    /// </summary>
     public static (string sql, IEnumerable<object> parameters) MergeTable<T>(DbContext? context, TableInfo tableInfo, OperationType operationType, IEnumerable<string>? entityPropertyWithDefaultValue = default) where T : class
     {
         List<object> parameters = new();
@@ -287,25 +228,6 @@ public static class SqlQueryBuilder
         return (sql: q, parameters);
     }
 
-    /// <summary>
-    /// Generates SQL query to truncate table
-    /// </summary>
-    public static string TruncateTable(string tableName)
-    {
-        var q = $"TRUNCATE TABLE {tableName};";
-        return q;
-    }
-
-
-    /// <summary>
-    /// Used for Sqlite, Truncate table 
-    /// </summary>
-    public static string DeleteTable(string tableName)
-    {
-        var q = $"DELETE FROM {tableName};" +
-                $"VACUUM;";
-        return q;
-    }
 
     // propertColumnsNamesDict used with Sqlite for @parameter to be save from non valid charaters ('', '!', ...) that are allowed as column Names in Sqlite
 

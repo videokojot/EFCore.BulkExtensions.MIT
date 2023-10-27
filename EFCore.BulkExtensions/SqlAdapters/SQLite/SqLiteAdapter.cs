@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
@@ -15,11 +14,9 @@ namespace EFCore.BulkExtensions.SqlAdapters.SQLite;
 /// <inheritdoc/>
 public class SqliteOperationsAdapter : ISqlOperationsAdapter
 {
-    /// <inheritdoc/>
-
     #region Methods
 
-    // Insert
+    /// <inheritdoc/>
     public void Insert<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress)
     {
         InsertAsync(context, type, entities, tableInfo, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
@@ -313,20 +310,14 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             }
         }
     }
+    
+    private static string DeleteTable(string tableName) => $"DELETE FROM {tableName};VACUUM;";
 
     /// <inheritdoc/>
-    public void Truncate(DbContext context, TableInfo tableInfo)
-    {
-        string sql = SqlQueryBuilder.DeleteTable(tableInfo.FullTableName);
-        context.Database.ExecuteSqlRaw(sql);
-    }
+    public void Truncate(DbContext context, TableInfo tableInfo) => context.Database.ExecuteSqlRaw(DeleteTable(tableInfo.FullTableName));
 
     /// <inheritdoc/>
-    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken)
-    {
-        string sql = SqlQueryBuilder.DeleteTable(tableInfo.FullTableName);
-        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken).ConfigureAwait(false);
-    }
+    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken) => await context.Database.ExecuteSqlRawAsync(DeleteTable(tableInfo.FullTableName), cancellationToken).ConfigureAwait(false);
 
     #endregion
 
