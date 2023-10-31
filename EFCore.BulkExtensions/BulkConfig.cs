@@ -295,12 +295,18 @@ public class BulkConfig
     /// </summary>
     public Func<DbTransaction, DbTransaction>? UnderlyingTransaction { get; set; }
 
+    public bool SetOutputNonIdentityColumns { get; set; } = true;
+
     internal OperationType OperationType { get; set; }
 
     internal object? SynchronizeFilter { get; private set; }
     
     internal bool OutputTableHasSqlActionColumn => CalculateStats 
                                                    || (OperationType is OperationType.InsertOrUpdateOrDelete or OperationType.Delete); // In case of delete we need to able to filter out 'delete' rows from the output table
+
+    internal bool LoadOnlyIdsWhenSettingOutputIdentity => SetOutputIdentity && !SetOutputNonIdentityColumns;
+
+    internal bool UseOriginalIndexToIdentityMappingColumn => LoadOnlyIdsWhenSettingOutputIdentity;
 }
 
 /// <summary>

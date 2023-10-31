@@ -48,7 +48,6 @@ public class TableInfo
     public ValueConverter? IdentityColumnConverter { get; set; }
     public bool HasOwnedTypes { get; set; }
     public bool HasAbstractList { get; set; }
-    public bool ColumnNameContainsSquareBracket { get; set; }
     public bool LoadOnlyPKColumn { get; set; }
     public bool HasSpatialType { get; set; }
     public bool HasTemporalColumns { get; set; }
@@ -83,6 +82,8 @@ public class TableInfo
     
     public string SqlActionIUD => "EFCore_BulkExtensions_MIT_MergeActionIUD";
 
+    public string OriginalIndexColumnName => "EFCore_BulkExtensions_MIT_OriginalIndex";
+
  
 #pragma warning restore CS1591 // No XML comments required here.
 
@@ -114,14 +115,6 @@ public class TableInfo
     /// <summary>
     /// Configures the table info based on entity data 
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="loadOnlyPKColumn"></param>
-    /// <exception cref="InvalidOperationException"></exception>
-    /// <exception cref="MultiplePropertyListSetException"></exception>
-    /// <exception cref="InvalidBulkConfigException"></exception>
     public void LoadData<T>(DbContext context, Type? type, IList<T> entities, bool loadOnlyPKColumn)
 
     {
@@ -582,9 +575,6 @@ public class TableInfo
     /// <summary>
     /// Validates the specified property list
     /// </summary>
-    /// <param name="specifiedPropertiesList"></param>
-    /// <param name="specifiedPropertiesListName"></param>
-    /// <exception cref="InvalidOperationException"></exception>
     protected void ValidateSpecifiedPropertiesList(List<string>? specifiedPropertiesList, string specifiedPropertiesListName)
 
     {
@@ -609,17 +599,13 @@ public class TableInfo
 
     #region SqlCommands
 
-    /// <summary>
-    /// Checks if the table exists
-    /// </summary>
-
     public record struct MergeActionCounts(int Inserted, int Updated, int Deleted);
 
     public async Task<MergeActionCounts> GetMergeActionCounts(DbContext context, bool isAsync, CancellationToken cancellationToken)
     {
         var commandText = $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'I';\n"
-                                 + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'U' ;\n"
-                                 + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'D';";
+                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'U' ;\n"
+                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'D';";
 
         var inserted = -1;
         var updated = -1;
@@ -627,7 +613,7 @@ public class TableInfo
 
         if (isAsync)
         {
-            await GetMergeActionCountsAsync().ConfigureAwait(false);
+            await GetMergeActionCountsInternalAsync().ConfigureAwait(false);
         }
         else
         {
@@ -636,7 +622,7 @@ public class TableInfo
 
         return new MergeActionCounts(inserted, updated, deleted);
 
-        async Task GetMergeActionCountsAsync()
+        async Task GetMergeActionCountsInternalAsync()
         {
             #pragma warning disable CA2007
 
@@ -919,7 +905,7 @@ public class TableInfo
     /// <summary>
     /// Updates the entities' identity field
     /// </summary>
-    public void UpdateEntitiesIdentity<T>(TableInfo tableInfo, IList<T> entities, IList<object> entitiesWithOutputIdentity)
+    internal void UpdateEntitiesIdentity<T>(TableInfo tableInfo, IList<T> entities, IList<object> entitiesWithOutputIdentity)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
                                                                 : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                               // or PK with default sql value
@@ -1037,6 +1023,61 @@ public class TableInfo
             }
         }
     }
+    
+    internal void UpdateEntitiesIdentityByMap<T>(TableInfo tableInfo, IList<T> entities, List<IndexToGeneratedId> indexToGeneratedIds)
+    {
+        var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
+                                                                : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                               // or PK with default sql value
+
+        if (BulkConfig.PreserveInsertOrder)
+        {
+            int countDiff = entities.Count - entitiesWithOutputIdentity.Count;
+            if (countDiff > 0) // When some ommited from Merge because of TimeStamp conflict then changes are not loaded but output is set in TimeStampInfo
+            {
+                tableInfo.BulkConfig.TimeStampInfo = new TimeStampInfo
+                {
+                    NumberOfSkippedForUpdate = countDiff,
+                    EntitiesOutput = entitiesWithOutputIdentity.ToList()
+                };
+                return;
+            }
+
+            var mappingDictionary = indexToGeneratedIds.GroupBy(x => x.OriginalIndex).ToDictionary(x => x.Key, x => x.ToList());
+
+            for (int index = 0; index < NumberOfEntities; index++)
+            {
+                T entityToBeFilled = entities[index]!;
+                var mapping = mappingDictionary[index];
+
+                if (mapping.Count > 1)
+                {
+                    // This might happen in case of BulkInsertOrUpdate with custom UpdateBy properties, when there are multiple matching rows in table which is updated
+                    // for more see: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+                    // In case of setting output identity, we cannot decide which id we should use (as there might be multiple rows in output table, which 'belong' to only one row in source table).
+
+                       throw new BulkExtensionsException(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties,
+                    "Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
+                    + "Keys which matched more rows: "
+                    + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
+                }
+
+                
+                if (identifierPropertyName != null)
+                {
+                    var generatedId = mapping.Single().GeneratedId;
+                     FastPropertyDict[identifierPropertyName].Set(entityToBeFilled, generatedId);
+                }
+
+                if (TimeStampColumnName != null) // timestamp/rowversion is also generated by the SqlServer so if exist should be updated as well
+                {
+                    // TODO Fill also timestamp
+                    string timeStampPropertyName = OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == TimeStampColumnName).Key;
+                    var timeStampPropertyValue = FastPropertyDict[timeStampPropertyName].Get(elementFromOutputTable);
+                    FastPropertyDict[timeStampPropertyName].Set(entityToBeFilled, timeStampPropertyValue);
+                }
+            }
+        }
+    }
 
     // Compiled queries created manually to avoid EF Memory leak bug when using EF with dynamic SQL:
     // https://github.com/borisdj/EFCore.BulkExtensions/issues/73
@@ -1051,32 +1092,102 @@ public class TableInfo
 
         if (BulkConfig.SetOutputIdentity && hasIdentity)
         {
-            var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
-            string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer(context).QueryBuilder.SelectFromOutputTable(this);
-            //var entitiesWithOutputIdentity = await QueryOutputTableAsync<T>(context, sqlQuery).ToListAsync(cancellationToken).ConfigureAwait(false); // TempFIX
-            var entitiesWithOutputIdentity = QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
-            //var entitiesWithOutputIdentity = (typeof(T) == type) ? QueryOutputTable<object>(context, sqlQuery).ToList() : QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
-
-            //var entitiesObjects = entities.Cast<object>().ToList();
-            UpdateEntitiesIdentity(tableInfo, entities, entitiesWithOutputIdentity);
-        }
-        if (BulkConfig.CalculateStats)
-        {
-            MergeActionCounts mergeCounts;
-            if (isAsync)
+            if (BulkConfig.UseOriginalIndexToIdentityMappingColumn)
             {
-                mergeCounts = await GetMergeActionCounts(context, isAsync: true, cancellationToken).ConfigureAwait(false);
+                var map = isAsync ? await QueryOutputTableForIndexToIdMapping(context, isAsync, cancellationToken).ConfigureAwait(false)
+                              : QueryOutputTableForIndexToIdMapping(context, isAsync, cancellationToken).GetAwaiter().GetResult();
+                
+                UpdateEntitiesIdentityByMap(tableInfo, entities, map);
             }
             else
             {
-                mergeCounts = GetMergeActionCounts(context, isAsync: false, cancellationToken).GetAwaiter().GetResult();
+                var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
+                string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer(context).QueryBuilder.SelectFromOutputTable(this);
+                //var entitiesWithOutputIdentity = await QueryOutputTableAsync<T>(context, sqlQuery).ToListAsync(cancellationToken).ConfigureAwait(false); // TempFIX
+                var entitiesWithOutputIdentity = QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
+                //var entitiesWithOutputIdentity = (typeof(T) == type) ? QueryOutputTable<object>(context, sqlQuery).ToList() : QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
+
+                UpdateEntitiesIdentity(tableInfo, entities, entitiesWithOutputIdentity);
             }
+        }
+        
+        if (BulkConfig.CalculateStats)
+        {
+            var mergeCounts = isAsync ? await GetMergeActionCounts(context, isAsync: true, cancellationToken).ConfigureAwait(false)
+                                  : GetMergeActionCounts(context, isAsync: false, cancellationToken).GetAwaiter().GetResult();
             BulkConfig.StatsInfo = new StatsInfo
             {
                 StatsNumberUpdated = mergeCounts.Updated,
                 StatsNumberDeleted = mergeCounts.Deleted,
                 StatsNumberInserted = mergeCounts.Inserted,
             };
+        }
+    }
+
+    internal record struct IndexToGeneratedId(int OriginalIndex, object GeneratedId);
+    
+    internal async Task<List<IndexToGeneratedId>> QueryOutputTableForIndexToIdMapping(DbContext context, bool isAsync, CancellationToken cancellationToken)
+    {
+        var sql = $"SELECT [{OriginalIndexColumnName}],[{IdentityColumnName}] FROM {FullTempOutputTableName} WHERE [{OriginalIndexColumnName}] is not null;";
+
+        return isAsync ? await GetInternalAsync().ConfigureAwait(false) : GetInternal();
+
+        async Task<List<IndexToGeneratedId>> GetInternalAsync()
+        {
+            await using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = sql;
+
+            if (command.Connection!.State != ConnectionState.Open)
+            {
+                await command.Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            if (context.Database.CurrentTransaction != null)
+            {
+                command.Transaction = context.Database.CurrentTransaction.GetDbTransaction();
+            }
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+
+            var results = new List<IndexToGeneratedId>();
+
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var index = reader.GetInt32(0);
+                var id = reader.GetValue(1);
+                results.Add(new IndexToGeneratedId(index, id));
+            }
+
+            return results;
+        }
+
+        List<IndexToGeneratedId> GetInternal()
+        {
+            using var command = context.Database.GetDbConnection().CreateCommand();
+            command.CommandText = sql;
+
+            if (command.Connection!.State != ConnectionState.Open)
+            {
+                command.Connection.Open();
+            }
+
+            if (context.Database.CurrentTransaction != null)
+            {
+                command.Transaction = context.Database.CurrentTransaction.GetDbTransaction();
+            }
+
+            using var reader = command.ExecuteReader();
+
+            var results = new List<IndexToGeneratedId>();
+
+            while (reader.Read())
+            {
+                var index = reader.GetInt32(0);
+                var id = reader.GetValue(1);
+                results.Add(new IndexToGeneratedId(index, id));
+            }
+
+            return results;
         }
     }
 
