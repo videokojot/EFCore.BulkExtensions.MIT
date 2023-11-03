@@ -1,4 +1,5 @@
 using EFCore.BulkExtensions.SqlAdapters;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -44,7 +45,10 @@ public class TableInfo
 
     public bool InsertToTempTable { get; set; }
     public string? IdentityColumnName { get; set; }
+    
     public bool HasIdentity => IdentityColumnName != null;
+
+    public bool HasTimeStampColumn => TimeStampColumnName != null;
     public ValueConverter? IdentityColumnConverter { get; set; }
     public bool HasOwnedTypes { get; set; }
     public bool HasAbstractList { get; set; }
@@ -1023,58 +1027,60 @@ public class TableInfo
             }
         }
     }
-    
+
     internal void UpdateEntitiesIdentityByMap<T>(TableInfo tableInfo, IList<T> entities, List<IndexToGeneratedId> indexToGeneratedIds)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
-                                                                : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                               // or PK with default sql value
+                                         : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                                                      // or PK with default sql value
 
-        if (BulkConfig.PreserveInsertOrder)
+        var timeStampPropertyName = OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == TimeStampColumnName).Key;
+
+        var mappingDictionary = indexToGeneratedIds.GroupBy(x => x.OriginalIndex).ToDictionary(x => x.Key, x => x.ToList());
+
+        if (mappingDictionary.Any(x => x.Value.Count > 1))
         {
-            int countDiff = entities.Count - entitiesWithOutputIdentity.Count;
-            if (countDiff > 0) // When some ommited from Merge because of TimeStamp conflict then changes are not loaded but output is set in TimeStampInfo
+            // This might happen in case of BulkInsertOrUpdate with custom UpdateBy properties, when there are multiple matching rows in table which is updated
+            // for more see: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+            // In case of setting output identity, we cannot decide which id we should use (as there might be multiple rows in output table, which 'belong' to only one row in source table).
+                
+            var customPk = tableInfo.PrimaryKeysPropertyColumnNameDict.Keys;
+            var nonUniqueEntities = mappingDictionary.Where(x => x.Value.Count > 1).Select(x => x.Key).Select(x => entities[x]).ToList();
+
+            var nonUniqueKeys = nonUniqueEntities.Select(x => new PrimaryKeysPropertyColumnNameValues(customPk.Select(c => FastPropertyDict[c].Get(x!)))).ToList();
+                
+            throw new BulkExtensionsException(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties,
+                                              "Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
+                                              + "Keys which matched more rows: "
+                                              + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
+        }
+
+        for (int index = 0; index < NumberOfEntities; index++)
+        {
+            T entityToBeFilled = entities[index]!;
+
+            if (!mappingDictionary.TryGetValue(index, out var  mapping))
             {
+                // If any item is excluded from MERGE because of TimeStamp conflict
+                // then the output identities are not loaded but output is set in TimeStampInfo
                 tableInfo.BulkConfig.TimeStampInfo = new TimeStampInfo
                 {
-                    NumberOfSkippedForUpdate = countDiff,
-                    EntitiesOutput = entitiesWithOutputIdentity.ToList()
+                    NumberOfSkippedForUpdate = entities.Count - mappingDictionary.Count,
+                    EntitiesOutput = indexToGeneratedIds.Cast<object>().ToList(),
                 };
+
                 return;
             }
-
-            var mappingDictionary = indexToGeneratedIds.GroupBy(x => x.OriginalIndex).ToDictionary(x => x.Key, x => x.ToList());
-
-            for (int index = 0; index < NumberOfEntities; index++)
+            
+            if (identifierPropertyName != null)
             {
-                T entityToBeFilled = entities[index]!;
-                var mapping = mappingDictionary[index];
+                var generatedId = mapping.Single().GeneratedId;
+                FastPropertyDict[identifierPropertyName].Set(entityToBeFilled, generatedId);
+            }
 
-                if (mapping.Count > 1)
-                {
-                    // This might happen in case of BulkInsertOrUpdate with custom UpdateBy properties, when there are multiple matching rows in table which is updated
-                    // for more see: https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
-                    // In case of setting output identity, we cannot decide which id we should use (as there might be multiple rows in output table, which 'belong' to only one row in source table).
-
-                       throw new BulkExtensionsException(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties,
-                    "Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
-                    + "Keys which matched more rows: "
-                    + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
-                }
-
-                
-                if (identifierPropertyName != null)
-                {
-                    var generatedId = mapping.Single().GeneratedId;
-                     FastPropertyDict[identifierPropertyName].Set(entityToBeFilled, generatedId);
-                }
-
-                if (TimeStampColumnName != null) // timestamp/rowversion is also generated by the SqlServer so if exist should be updated as well
-                {
-                    // TODO Fill also timestamp
-                    string timeStampPropertyName = OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == TimeStampColumnName).Key;
-                    var timeStampPropertyValue = FastPropertyDict[timeStampPropertyName].Get(elementFromOutputTable);
-                    FastPropertyDict[timeStampPropertyName].Set(entityToBeFilled, timeStampPropertyValue);
-                }
+            if (HasTimeStampColumn) // timestamp/rowversion is also generated by the SqlServer so if it exist should be updated as well
+            {
+                var timestampValue = mapping.Single().GeneratedTimestamp;
+                FastPropertyDict[timeStampPropertyName].Set(entityToBeFilled, timestampValue);
             }
         }
     }
@@ -1124,16 +1130,29 @@ public class TableInfo
         }
     }
 
-    internal record struct IndexToGeneratedId(int OriginalIndex, object GeneratedId);
-    
+    internal record struct IndexToGeneratedId(int OriginalIndex, object GeneratedId, object? GeneratedTimestamp);
+
     internal async Task<List<IndexToGeneratedId>> QueryOutputTableForIndexToIdMapping(DbContext context, bool isAsync, CancellationToken cancellationToken)
     {
-        var sql = $"SELECT [{OriginalIndexColumnName}],[{IdentityColumnName}] FROM {FullTempOutputTableName} WHERE [{OriginalIndexColumnName}] is not null;";
+        var shouldLoadAlsoTimestamp = false;
+        var identityColumn = HasIdentity ? $",[{IdentityColumnName}]" : string.Empty;
+        var timestampColumn = HasTimeStampColumn ? $", [{TimeStampColumnName}]" : string.Empty;
+        var sql = $"SELECT [{OriginalIndexColumnName}] {identityColumn} {timestampColumn} FROM {FullTempOutputTableName} WHERE [{OriginalIndexColumnName}] is not null;";
+        var results = new List<IndexToGeneratedId>();
 
-        return isAsync ? await GetInternalAsync().ConfigureAwait(false) : GetInternal();
+        return isAsync ? await LoadResultsInternalAsync().ConfigureAwait(false) : LoadResultsInternal();
 
-        async Task<List<IndexToGeneratedId>> GetInternalAsync()
+        void ReadAndAddRow(DbDataReader reader)
         {
+            var index = reader.GetInt32(0);
+            var id = reader.GetValue(1);
+            var timestampValue = shouldLoadAlsoTimestamp ? reader.GetValue(2) : null;
+            results.Add(new IndexToGeneratedId(index, id, timestampValue));
+        }
+
+        async Task<List<IndexToGeneratedId>> LoadResultsInternalAsync()
+        {
+            #pragma warning disable CA2007
             await using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText = sql;
 
@@ -1148,20 +1167,17 @@ public class TableInfo
             }
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-
-            var results = new List<IndexToGeneratedId>();
-
+            #pragma warning restore CA2007
+            
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
-                var index = reader.GetInt32(0);
-                var id = reader.GetValue(1);
-                results.Add(new IndexToGeneratedId(index, id));
+                ReadAndAddRow(reader);
             }
 
             return results;
         }
 
-        List<IndexToGeneratedId> GetInternal()
+        List<IndexToGeneratedId> LoadResultsInternal()
         {
             using var command = context.Database.GetDbConnection().CreateCommand();
             command.CommandText = sql;
@@ -1178,13 +1194,9 @@ public class TableInfo
 
             using var reader = command.ExecuteReader();
 
-            var results = new List<IndexToGeneratedId>();
-
             while (reader.Read())
             {
-                var index = reader.GetInt32(0);
-                var id = reader.GetValue(1);
-                results.Add(new IndexToGeneratedId(index, id));
+                ReadAndAddRow(reader);
             }
 
             return results;
