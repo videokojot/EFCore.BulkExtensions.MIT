@@ -118,7 +118,7 @@ jobs:
       - name: Tag commit v8
         uses: EndBug/latest-tag@latest
         with:
-          ref: "8.${{ github.event.release.tag_name }}-preview1"
+          ref: "8.${{ github.event.release.tag_name }}"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.

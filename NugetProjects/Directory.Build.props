@@ -3,7 +3,7 @@
         <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
-        <BaseVersion>13.0</BaseVersion>
+        <BaseVersion>14.0</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
         <Authors>borisdj, Jindrich Cincibuch</Authors>
@@ -46,7 +46,7 @@
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v8'))">
             <PropertyGroup>
-                <Version>8.$(BaseVersion)-preview1</Version>
+                <Version>8.$(BaseVersion)</Version>
                 <TargetFramework>net8.0</TargetFramework>
                 <DefineConstants>$(DefineConstants);V8</DefineConstants>
                 <AssemblyVersion>8.$(BaseVersion).0</AssemblyVersion>
