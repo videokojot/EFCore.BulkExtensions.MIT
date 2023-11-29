@@ -151,6 +151,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
                                   c.SetOutputIdentity = true;
                                   c.UpdateByProperties = new List<string> { nameof(SimpleItem.StringProperty), nameof(SimpleItem.Name) };
                                   c.PreserveInsertOrder = true;
+                                  c.SetOutputNonIdentityColumns = false;
                               });
 
         var fromDb = db.SimpleItems.SingleOrDefault(x => x.GuidProperty == newItem.GuidProperty);
@@ -267,8 +268,9 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
     /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/62
     /// </summary>
     [Theory]
-    [InlineData(DbServerType.SQLServer)]
-    public void IUD_UpdateByCustomColumns_SetOutputIdentity_CustomColumnNames(DbServerType dbType)
+    [InlineData(DbServerType.SQLServer, true)]
+    [InlineData(DbServerType.SQLServer, false)]
+    public void IUD_UpdateByCustomColumns_SetOutputIdentity_CustomColumnNames(DbServerType dbType, bool setOutputNonIdColumns)
     {
         var item = new Entity_CustomColumnNames()
         {
@@ -289,6 +291,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             {
                 c.SetOutputIdentity = true;
                 c.UpdateByProperties = new List<string> { nameof(Entity_CustomColumnNames.CustomColumn) };
+                c.SetOutputNonIdentityColumns = setOutputNonIdColumns;
             });
         }
 
