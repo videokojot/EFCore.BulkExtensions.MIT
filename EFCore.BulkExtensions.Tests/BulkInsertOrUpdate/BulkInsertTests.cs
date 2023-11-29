@@ -15,11 +15,9 @@ public class BulkInsertTests : IClassFixture<BulkInsertTests.DatabaseFixture>, I
         _dbFixture = dbFixture;
     }
 
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(BulkInsertTests))
-        {
-        }
+        protected override string DbName => nameof(BulkInsertTests);
     }
 
 

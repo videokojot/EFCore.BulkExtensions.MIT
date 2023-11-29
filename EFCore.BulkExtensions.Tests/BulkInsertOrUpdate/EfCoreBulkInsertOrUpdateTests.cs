@@ -306,10 +306,9 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
     }
 
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(EfCoreBulkInsertOrUpdateTests))
-        {
-        }
+        protected override string DbName => nameof(EfCoreBulkInsertOrUpdateTests);
+
     }
 }
