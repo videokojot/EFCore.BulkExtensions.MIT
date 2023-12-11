@@ -27,9 +27,9 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             columnsNames.Remove(tableInfo.TimeStampColumnName);
         }
         
-        string statsColumn = (tableInfo.BulkConfig.OutputTableHasSqlActionColumn && isOutputTable) ? $", [{tableInfo.SqlActionIUD}] = CAST('' AS char(1)) " : "";
-        
-        var q = $"SELECT TOP 0 {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames, "T")} " + statsColumn +
+        string statsColumn = (tableInfo.BulkConfig.OutputTableHasSqlActionColumn && isOutputTable) ? $", CAST('' AS char(1)) AS [{tableInfo.SqlActionIUD}] " : "";
+        string indexMappingColumn = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $", CAST(-1 AS int) AS [{tableInfo.OriginalIndexColumnName}] " : "";
+        var q = $"SELECT TOP 0 {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames, "T")} " + statsColumn + indexMappingColumn +
                 $"INTO {newTableName} FROM {existingTableName} AS T " +
                 $"LEFT JOIN {existingTableName} AS Source ON 1 = 0;"; // removes Identity constraint
         return q;
@@ -195,6 +195,7 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
                 context.Database.CloseConnection();
             }
         }
+        
         if (!tableInfo.CreatedOutputTable)
         {
             tableInfo.CheckToSetIdentityForPreserveOrder(tableInfo, entities, reset: true);
@@ -254,13 +255,14 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             }
 
             var sqlCreateTableCopy = CreateTableCopy(tableInfo.FullTableName, tableInfo.FullTempTableName, tableInfo);
+            
             if (isAsync)
             {
                 await context.Database.ExecuteSqlRawAsync(sqlCreateTableCopy, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                    context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
+                context.Database.ExecuteSqlRaw(sqlCreateTableCopy);
             }
 
             if (tableInfo.TimeStampColumnName != null)
@@ -554,14 +556,15 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
     /// <summary>
     /// Supports <see cref="SqlBulkCopy"/>
     /// </summary>
-    public static DataTable GetDataTable<T>(DbContext context, Type type, IList<T> entities, SqlBulkCopy sqlBulkCopy, TableInfo tableInfo)
+    internal static DataTable GetDataTable<T>(DbContext context, Type type, IList<T> entities, SqlBulkCopy sqlBulkCopy, TableInfo tableInfo)
     {
         DataTable dataTable = InnerGetDataTable(context, ref type, entities, tableInfo);
 
-        foreach (DataColumn item in dataTable.Columns)  //Add mapping
+        foreach (DataColumn item in dataTable.Columns)  // Add mapping
         {
             sqlBulkCopy.ColumnMappings.Add(item.ColumnName, item.ColumnName);
         }
+        
         return dataTable;
     }
 
@@ -785,8 +788,16 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
             dataTable.Columns.Add(discriminatorColumn, discriminatorProperty.ClrType);
             columnsDict.Add(discriminatorColumn, entityType.GetDiscriminatorValue());
         }
+        
         bool hasConverterProperties = tableInfo.ConvertiblePropertyColumnDict.Count > 0;
 
+        if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+        {
+            dataTable.Columns.Add(tableInfo.OriginalIndexColumnName, typeof(int));
+            columnsDict.Add(tableInfo.OriginalIndexColumnName, -1);
+        }
+
+        var index = 0;
         foreach (T entity in entities)
         {
             var propertiesToLoad = properties
@@ -924,8 +935,15 @@ public sealed class SqlOperationsServerAdapter: ISqlOperationsAdapter
                 }
             }
 
+            if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+            {
+                columnsDict[tableInfo.OriginalIndexColumnName] = index;
+            }
+            
             var record = columnsDict.Values.ToArray();
+
             dataTable.Rows.Add(record);
+            index++;
         }
 
         return dataTable;

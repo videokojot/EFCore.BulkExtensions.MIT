@@ -82,13 +82,6 @@ public static class SqlQueryBuilder
             insertColumnsNames = insertColumnsNames.Where(a => !defaults.Contains(a)).ToList();
         }
         
-        string mergeActionColumn = "";
-
-        if (tableInfo.BulkConfig.OutputTableHasSqlActionColumn)
-        {
-            mergeActionColumn = ",SUBSTRING($action, 1, 1)";
-        }
-
         if (tableInfo.BulkConfig.PreserveInsertOrder)
         {
             int numberOfEntities = tableInfo.BulkConfig.CustomSourceTableName == null
@@ -114,7 +107,6 @@ public static class SqlQueryBuilder
         }
 
         q = q.Replace("INSERT () VALUES ()", "INSERT DEFAULT VALUES"); // case when table has only one column that is Identity
-
 
         if (operationType == OperationType.Update || operationType == OperationType.InsertOrUpdate || operationType == OperationType.InsertOrUpdateOrDelete)
         {
@@ -178,6 +170,7 @@ public static class SqlQueryBuilder
         {
             q += " WHEN MATCHED THEN DELETE";
         }
+        
         if (tableInfo.CreatedOutputTable)
         {
             string commaSeparatedColumnsNames;
@@ -189,7 +182,21 @@ public static class SqlQueryBuilder
             {
                 commaSeparatedColumnsNames = GetCommaSeparatedColumns(outputColumnsNames, "INSERTED");
             }
-            q += $" OUTPUT {commaSeparatedColumnsNames}" + mergeActionColumn +
+            
+            string mergeActionColumn = "";
+            string outputIndexColumn = "";
+
+            if (tableInfo.BulkConfig.OutputTableHasSqlActionColumn)
+            {
+                mergeActionColumn = " ,SUBSTRING($action, 1, 1)";
+            }
+            
+            if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+            {
+                outputIndexColumn = $" ,S.[{tableInfo.OriginalIndexColumnName}]";
+            }
+            
+            q += $" OUTPUT {commaSeparatedColumnsNames}" + mergeActionColumn + outputIndexColumn +
                  $" INTO {tableInfo.FullTempOutputTableName}";
         }
         q += ";";
