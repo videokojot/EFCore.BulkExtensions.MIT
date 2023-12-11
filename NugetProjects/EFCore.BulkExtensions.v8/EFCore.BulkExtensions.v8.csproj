@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0-preview3.23201.1" />
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0-preview4.23342.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0-rc.1.23419.6" />
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0-rc.1.23419.4" />
         <PackageReference Include="NetTopologySuite.IO.SqlServerBytes" Version="2.1.0" />
