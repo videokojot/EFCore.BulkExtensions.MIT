@@ -111,7 +111,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
             }
             else
             {
-                updateAction = "ON DUPLICATE KEY UPDATE " + $"{equalsColumns}; ";
+                updateAction = $"ON DUPLICATE KEY UPDATE {equalsColumns}";
             }
 
             query = $"INSERT INTO {tableInfo.FullTableName} ({commaSeparatedColumns}) " +
