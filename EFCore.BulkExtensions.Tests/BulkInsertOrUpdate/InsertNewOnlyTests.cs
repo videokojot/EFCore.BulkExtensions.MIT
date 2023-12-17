@@ -19,7 +19,8 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/321
     /// </summary>
     [Theory]
-    [InlineData(DbServerType.MySQL)]
+    [InlineData(DbServerType.SQLServer)]
+    [InlineData(DbServerType.PostgreSQL)]
     public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();
