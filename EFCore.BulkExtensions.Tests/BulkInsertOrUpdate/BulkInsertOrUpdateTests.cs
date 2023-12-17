@@ -9,12 +9,12 @@ using Xunit.Abstractions;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
 {
     private readonly ITestOutputHelper _writer;
     private readonly DatabaseFixture _dbFixture;
 
-    public EfCoreBulkInsertOrUpdateTests(ITestOutputHelper writer, DatabaseFixture dbFixture)
+    public BulkInsertOrUpdateTests(ITestOutputHelper writer, DatabaseFixture dbFixture)
     {
         _writer = writer;
         _dbFixture = dbFixture;
@@ -308,7 +308,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        protected override string DbName => nameof(EfCoreBulkInsertOrUpdateTests);
+        protected override string DbName => nameof(BulkInsertOrUpdateTests);
 
     }
 }
