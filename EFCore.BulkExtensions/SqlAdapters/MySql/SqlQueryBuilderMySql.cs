@@ -118,14 +118,21 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
                              $"SELECT * FROM {tableInfo.FullTempTableName} ";
                 }
 
-                if (operationType == OperationType.InsertOrUpdate)
-                {
-                    query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
-                             $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
-                             $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
-                             $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
-                             $"WHERE  B.{firstPrimaryKey} IS NULL; ";
-                }
+                // This also is commented in original code, just ignoring the ids of updated values.
+                // So the set output identity just does not work on MySql.
+                // See: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90
+                
+                // if (operationType == OperationType.InsertOrUpdate)
+                // {
+                //     // We cannot refer to FullTempOutputTableName twice in one query. See:
+                //     // https://dev.mysql.com/doc/refman/8.0/en/temporary-table-problems.html
+                //     // So we need to find a way to 
+                //     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
+                //              $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
+                //              $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
+                //              $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
+                //              $"WHERE  B.{firstPrimaryKey} IS NULL; ";
+                // }
             
             }
         }
