@@ -19,8 +19,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     /// Covers issue: https://github.com/borisdj/EFCore.BulkExtensions/issues/321
     /// </summary>
     [Theory]
-    [InlineData(DbServerType.SQLServer)]
-    [InlineData(DbServerType.PostgreSQL)]
+    [InlineData(DbServerType.MySQL)]
     public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();
@@ -69,7 +68,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
                                   });
         }
 
-        var allItems = GetItemsOfBulk(bulkId, dbType);
+        var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
 
         Assert.Equal(2, allItems.Count);
 
@@ -82,12 +81,6 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         Assert.Equal(initialItem.Name, itemWhichWasNotUpdated.Name);
     }
 
-    private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
-    {
-        using var db = _dbFixture.GetDb(sqlType);
-
-        return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
-    }
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {

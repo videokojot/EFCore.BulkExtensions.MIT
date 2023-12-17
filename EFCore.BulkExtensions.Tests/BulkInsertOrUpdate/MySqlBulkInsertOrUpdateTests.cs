@@ -1,6 +1,7 @@
 using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -18,18 +19,19 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         _dbFixture = dbFixture;
     }
 
-    [Fact(Skip = "Tracked by issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90")]
-    public async Task TestBulkInsertOrUpdate()
+    [Theory(Skip = "Tracked by issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90")]
+    [InlineData(DbServerType.MySQL)]
+    public async Task TestBulkInsertOrUpdate(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();
         var initialItem = new MySqlItem()
         {
             Id = 0,
-            Name = "initialValue",
-            BulkId = bulkId,
+            StringProperty = "initialValue",
+            BulkIdentifier = bulkId,
         };
 
-        using (var db = _dbFixture.GetDb(DbServerType.MySQL))
+        using (var db = _dbFixture.GetDb(dbType))
         {
             db.Items.Add(initialItem);
             await db.SaveChangesAsync();
@@ -42,18 +44,18 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         var updatingItem = new MySqlItem()
         {
             Id = initialId,
-            Name = "updatedValue",
-            BulkId = bulkId,
+            StringProperty = "updatedValue",
+            BulkIdentifier = bulkId,
         };
 
         var newItem = new MySqlItem()
         {
             Id = 0,
-            Name = "newValue",
-            BulkId = bulkId,
+            StringProperty = "newValue",
+            BulkIdentifier = bulkId,
         };
 
-        using (var db = _dbFixture.GetDb(DbServerType.MySQL))
+        using (var db = _dbFixture.GetDb(dbType))
         {
             await db.BulkInsertOrUpdateAsync(new[]
             {
@@ -63,20 +65,80 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
             Assert.NotEqual(0, newItem.Id);
         }
 
-        using (var db = _dbFixture.GetDb(DbServerType.MySQL))
+        using (var db = _dbFixture.GetDb(dbType))
         {
-            var items = await db.Items.Where(x => x.BulkId == bulkId).ToListAsync();
+            var items = await db.Items.Where(x => x.BulkIdentifier == bulkId).ToListAsync();
 
             Assert.Equal(2, items.Count);
 
             // Item was updated
-            Assert.Single(items, x => x.Name == updatingItem.Name && x.Id == updatingItem.Id);
+            Assert.Single(items, x => x.StringProperty == updatingItem.StringProperty && x.Id == updatingItem.Id);
 
             // Item was inserted
-            Assert.Single(items, x => x.Name == newItem.Name
+            Assert.Single(items, x => x.StringProperty == newItem.StringProperty
                 // && x.Id == newItem.Id
             );
         }
+    }
+
+    [Theory]
+    [InlineData(DbServerType.MySQL)]
+    public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
+    {
+        var bulkId = Guid.NewGuid();
+
+        var initialItem = new MySqlItem()
+        {
+            StringProperty = "initial1",
+            BulkIdentifier = bulkId,
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            db.Items.Add(initialItem);
+            db.SaveChanges();
+        }
+
+        var initialItemId = initialItem.Id;
+
+        // Should be inserted
+        var newItem = new MySqlItem()
+        {
+            Id = 0,
+            StringProperty = "insertedByBulk",
+            BulkIdentifier = bulkId,
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        // Should not be updated (since we use insert only new scenario):
+        var updatedItem = new MySqlItem()
+        {
+            Id = initialItemId,
+            BulkIdentifier = bulkId,
+            StringProperty = "updated by Bulks",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var ensureList = new[] { newItem, updatedItem };
+
+            db.BulkInsertOrUpdate(ensureList,
+                                  c => { c.PropertiesToIncludeOnUpdate = new() { "" }; });
+        }
+
+        var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
+
+        Assert.Equal(2, allItems.Count);
+
+        var insertedItem = allItems.SingleOrDefault(x => x.GuidProperty == newItem.GuidProperty);
+        Assert.NotNull(insertedItem);
+
+        // initial item was not updated:
+        var itemWhichWasNotUpdated = allItems.Single(x => x.GuidProperty == initialItem.GuidProperty);
+        Assert.Equal(initialItem.Id, itemWhichWasNotUpdated.Id);
+        Assert.Equal(initialItem.StringProperty, itemWhichWasNotUpdated.StringProperty);
     }
 
     public class DatabaseFixture : BulkDbTestsFixture<MySqlSimpleContext>
@@ -91,6 +153,11 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         }
 
         public DbSet<MySqlItem> Items { get; private set; }
+
+        public List<MySqlItem> GetItemsOfBulk(Guid bulkId)
+        {
+            return Items.Where(x => x.BulkIdentifier == bulkId).ToList();
+        }
     }
 
     public class MySqlItem
@@ -98,8 +165,10 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public string Name { get; set; }
+        public string StringProperty { get; set; }
 
-        public Guid BulkId { get; set; }
+        public Guid BulkIdentifier { get; set; }
+
+        public Guid GuidProperty { get; set; }
     }
 }
