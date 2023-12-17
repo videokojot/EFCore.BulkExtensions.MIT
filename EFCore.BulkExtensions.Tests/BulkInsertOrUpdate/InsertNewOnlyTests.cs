@@ -68,7 +68,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
                                       c.PropertiesToIncludeOnUpdate = new() { "" };
                                   });
         }
-        
+
         var allItems = GetItemsOfBulk(bulkId, dbType);
 
         Assert.Equal(2, allItems.Count);
@@ -89,10 +89,8 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
     }
 
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(InsertNewOnlyTests))
-        {
-        }
+        protected override string DbName => nameof(InsertNewOnlyTests);
     }
 }

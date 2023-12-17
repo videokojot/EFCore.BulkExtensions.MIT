@@ -1,24 +1,22 @@
 using EFCore.BulkExtensions.SqlAdapters;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
 /// <summary>
 /// Expected to be used as fixture in XUnit tests. For example usage see: EfCoreBulkInsertOrUpdateTests.cs
 /// </summary>
-public abstract class BulkDbTestsFixture : IDisposable
+public abstract class BulkDbTestsFixture<TDbContext> : IDisposable
+    where TDbContext : DbContext
 {
-    private readonly string _dbName;
+    protected abstract string DbName { get; }
 
     private readonly HashSet<DbServerType> _initialized = new();
 
-    public BulkDbTestsFixture(string dbName)
-    {
-        _dbName = dbName;
-    }
-
-    public SimpleBulkTestsContext GetDb(DbServerType sqlType)
+    public TDbContext GetDb(DbServerType sqlType)
     {
         var shouldInitialize = _initialized.Add(sqlType);
 
@@ -33,11 +31,19 @@ public abstract class BulkDbTestsFixture : IDisposable
         return CreateContextInternal(sqlType);
     }
 
-    private SimpleBulkTestsContext CreateContextInternal(DbServerType sqlType)
+    private TDbContext CreateContextInternal(DbServerType sqlType)
     {
-        var options = ContextUtil.GetOptions<SimpleBulkTestsContext>(sqlType, databaseName: _dbName);
+        var options = ContextUtil.GetOptions<TDbContext>(sqlType, databaseName: DbName);
 
-        return new SimpleBulkTestsContext(options);
+        var ctorWithSingleDbOptionsParameters = typeof(TDbContext).GetConstructors()
+                                                                  .SingleOrDefault(x => x.GetParameters().Length == 1 && x.GetParameters().Single().ParameterType == typeof(DbContextOptions));
+
+        if (ctorWithSingleDbOptionsParameters is null)
+        {
+            throw new InvalidOperationException($"Type {typeof(TDbContext)}  must have ctor with single DbContextOptions parameter.");
+        }
+
+        return (TDbContext)ctorWithSingleDbOptionsParameters.Invoke(new object?[] { options });
     }
 
     public void Dispose()
