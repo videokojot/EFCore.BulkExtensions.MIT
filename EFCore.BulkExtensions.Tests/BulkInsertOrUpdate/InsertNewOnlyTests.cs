@@ -69,7 +69,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
                                   });
         }
 
-        var allItems = GetItemsOfBulk(bulkId, dbType);
+        var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
 
         Assert.Equal(2, allItems.Count);
 
@@ -82,12 +82,6 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         Assert.Equal(initialItem.Name, itemWhichWasNotUpdated.Name);
     }
 
-    private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
-    {
-        using var db = _dbFixture.GetDb(sqlType);
-
-        return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
-    }
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {

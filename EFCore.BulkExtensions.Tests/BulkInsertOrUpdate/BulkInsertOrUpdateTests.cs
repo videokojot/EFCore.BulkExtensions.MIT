@@ -107,7 +107,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
                 c.SetOutputIdentity = true;
             });
 
-            var dbItems = GetItemsOfBulk(bulkId, dbType).OrderBy(x => x.GuidProperty).ToList();
+            var dbItems = db.GetItemsOfBulk(bulkId).OrderBy(x => x.GuidProperty).ToList();
 
             var updatedDb = dbItems.Single(x => x.GuidProperty == initialItem.GuidProperty);
             var newDb = dbItems.Single(x => x.GuidProperty == newItem.GuidProperty);
@@ -217,7 +217,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
             Assert.Equal(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties, exception.ExceptionType);
             Assert.StartsWith("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db.", exception.Message);
 
-            var bulkItems = GetItemsOfBulk(bulkId, dbType);
+            var bulkItems = db.GetItemsOfBulk(bulkId);
 
             Assert.Equal(2, bulkItems.Count);
 
@@ -299,12 +299,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
         }
     }
 
-    private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
-    {
-        using var db = _dbFixture.GetDb(sqlType);
 
-        return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
-    }
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
