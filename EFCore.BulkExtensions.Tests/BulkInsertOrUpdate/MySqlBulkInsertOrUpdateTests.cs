@@ -162,7 +162,9 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
 
     public class MySqlItem
     {
-        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Column("DbId")]
         public int Id { get; set; }
 
         public string StringProperty { get; set; }
