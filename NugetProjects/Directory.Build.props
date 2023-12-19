@@ -46,7 +46,7 @@
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v8'))">
             <PropertyGroup>
-                <Version>8.$(BaseVersion)-preview1</Version>
+                <Version>8.$(BaseVersion)</Version>
                 <TargetFramework>net8.0</TargetFramework>
                 <DefineConstants>$(DefineConstants);V8</DefineConstants>
                 <AssemblyVersion>8.$(BaseVersion).0</AssemblyVersion>
