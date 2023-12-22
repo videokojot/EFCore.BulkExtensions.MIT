@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
@@ -20,6 +22,11 @@ public class SimpleBulkTestsContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+    }
+
+    public List<SimpleItem> GetItemsOfBulk(Guid bulkId)
+    {
+        return SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
     }
 }
 

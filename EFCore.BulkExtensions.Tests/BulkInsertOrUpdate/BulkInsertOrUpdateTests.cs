@@ -9,12 +9,12 @@ using Xunit.Abstractions;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
 {
     private readonly ITestOutputHelper _writer;
     private readonly DatabaseFixture _dbFixture;
 
-    public EfCoreBulkInsertOrUpdateTests(ITestOutputHelper writer, DatabaseFixture dbFixture)
+    public BulkInsertOrUpdateTests(ITestOutputHelper writer, DatabaseFixture dbFixture)
     {
         _writer = writer;
         _dbFixture = dbFixture;
@@ -107,7 +107,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
                 c.SetOutputIdentity = true;
             });
 
-            var dbItems = GetItemsOfBulk(bulkId, dbType).OrderBy(x => x.GuidProperty).ToList();
+            var dbItems = db.GetItemsOfBulk(bulkId).OrderBy(x => x.GuidProperty).ToList();
 
             var updatedDb = dbItems.Single(x => x.GuidProperty == initialItem.GuidProperty);
             var newDb = dbItems.Single(x => x.GuidProperty == newItem.GuidProperty);
@@ -218,7 +218,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             Assert.Equal(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties, exception.ExceptionType);
             Assert.StartsWith("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db.", exception.Message);
 
-            var bulkItems = GetItemsOfBulk(bulkId, dbType);
+            var bulkItems = db.GetItemsOfBulk(bulkId);
 
             Assert.Equal(2, bulkItems.Count);
 
@@ -302,17 +302,11 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         }
     }
 
-    private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
-    {
-        using var db = _dbFixture.GetDb(sqlType);
 
-        return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
-    }
 
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(EfCoreBulkInsertOrUpdateTests))
-        {
-        }
+        protected override string DbName => nameof(BulkInsertOrUpdateTests);
+
     }
 }

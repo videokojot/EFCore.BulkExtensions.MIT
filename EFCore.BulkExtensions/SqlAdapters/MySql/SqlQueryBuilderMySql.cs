@@ -43,11 +43,9 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     {
         var tempDict = tableInfo.PropertyColumnNamesDict;
 
-        if (operationType == OperationType.Insert && tableInfo.PropertyColumnNamesDict.Any()) // Only OnInsert omit columns with Default values
+        if (operationType == OperationType.Insert && tableInfo.PropertyColumnNamesDict.Any()) // Only OnInsert omit colums with Default values
         {
-            tableInfo.PropertyColumnNamesDict = tableInfo.PropertyColumnNamesDict
-                                                         .Where(a => !tableInfo.DefaultValueProperties.Contains(a.Key))
-                                                         .ToDictionary(a => a.Key, a => a.Value);
+            tableInfo.PropertyColumnNamesDict = tableInfo.PropertyColumnNamesDict.Where(a => !tableInfo.DefaultValueProperties.Contains(a.Key)).ToDictionary(a => a.Key, a => a.Value);
         }
 
         List<string> columnsList = tableInfo.PropertyColumnNamesDict.Values.ToList();
@@ -55,9 +53,9 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         tableInfo.PropertyColumnNamesDict = tempDict;
 
         bool keepIdentity = tableInfo.BulkConfig.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
-        var uniqueColumnName = tableInfo.PrimaryKeysPropertyColumnNameDict.Values.ToList().FirstOrDefault();
+        var uniquColumnName = tableInfo.PrimaryKeysPropertyColumnNameDict.Values.ToList().FirstOrDefault();
 
-        if (!keepIdentity && tableInfo.HasIdentity && (operationType == OperationType.Insert || tableInfo.IdentityColumnName != uniqueColumnName))
+        if (!keepIdentity && tableInfo.HasIdentity && (operationType == OperationType.Insert || tableInfo.IdentityColumnName != uniquColumnName))
         {
             columnsList = columnsList.Where(a => a != tableInfo.IdentityColumnName).ToList();
         }
@@ -78,11 +76,13 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         }
 
         string query;
-        var firstPrimaryKey = tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;
+        var firstPrimaryKey = tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Value;
 
         if (operationType == OperationType.Delete)
         {
-            query = "delete A " + $"FROM {tableInfo.FullTableName} AS A " + $"INNER JOIN {tableInfo.FullTempTableName} B on A.{firstPrimaryKey} = B.{firstPrimaryKey}; ";
+            query = "delete A " +
+                    $"FROM {tableInfo.FullTableName} AS A " +
+                    $"INNER JOIN {tableInfo.FullTempTableName} B on A.{firstPrimaryKey} = B.{firstPrimaryKey}; ";
         }
         else
         {
@@ -91,10 +91,23 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
             var columnsToUpdate = columnsListEquals.Where(c => tableInfo.PropertyColumnNamesUpdateDict.ContainsValue(c)).ToList();
             var equalsColumns = SqlQueryBuilder.GetCommaSeparatedColumns(columnsToUpdate, equalsTable: "EXCLUDED").Replace("[", "").Replace("]", "");
 
+            string updateAction;
+
+            if (string.IsNullOrEmpty(equalsColumns))
+            {
+                // This is 'do nothing' on update:
+                updateAction = $"ON DUPLICATE KEY UPDATE {firstPrimaryKey} = EXCLUDED.{firstPrimaryKey}";
+            }
+            else
+            {
+                updateAction = $"ON DUPLICATE KEY UPDATE {equalsColumns}";
+            }
+
             query = $"INSERT INTO {tableInfo.FullTableName} ({commaSeparatedColumns}) " +
                     $"SELECT {commaSeparatedColumns} FROM {tableInfo.FullTempTableName} AS EXCLUDED " +
-                    "ON DUPLICATE KEY UPDATE " +
-                    $"{equalsColumns}; ";
+                    updateAction +
+                    " ;";
+            ;
 
             if (tableInfo.CreatedOutputTable)
             {
@@ -108,17 +121,25 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
                 if (operationType == OperationType.Update)
                 {
-                    query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " + $"SELECT * FROM {tableInfo.FullTempTableName} ";
+                    query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
+                             $"SELECT * FROM {tableInfo.FullTempTableName} ";
                 }
 
-                if (operationType == OperationType.InsertOrUpdate)
-                {
-                    query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
-                             $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
-                             $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
-                             $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
-                             $"WHERE  B.{firstPrimaryKey} IS NULL; ";
-                }
+                // This also is commented in original code, just ignoring the ids of updated values.
+                // So the set output identity just does not work on MySql.
+                // See: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90
+
+                // if (operationType == OperationType.InsertOrUpdate)
+                // {
+                //     // We cannot refer to FullTempOutputTableName twice in one query. See:
+                //     // https://dev.mysql.com/doc/refman/8.0/en/temporary-table-problems.html
+                //     // So we need to find a way to 
+                //     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
+                //              $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
+                //              $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
+                //              $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
+                //              $"WHERE  B.{firstPrimaryKey} IS NULL; ";
+                // }
             }
         }
 
