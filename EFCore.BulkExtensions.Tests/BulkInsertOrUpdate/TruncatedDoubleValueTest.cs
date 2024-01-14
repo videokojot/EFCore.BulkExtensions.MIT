@@ -63,7 +63,7 @@ public class TruncatedDoubleValueTest : IClassFixture<TruncatedDoubleValueTest.D
         {
         }
 
-        public DbSet<Server> Servers { get; private set; }
+        public DbSet<Server> Servers { get; private set; } = null!;
     }
 
     public class Server

@@ -109,7 +109,7 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         [Column("DbId")]
         public int Id { get; set; }
 
-        public string StringProperty { get; set; }
+        public string StringProperty { get; set; } = null!;
 
         public Guid BulkIdentifier { get; set; }
 
