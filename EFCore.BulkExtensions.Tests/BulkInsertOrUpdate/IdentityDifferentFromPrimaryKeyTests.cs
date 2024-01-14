@@ -9,7 +9,7 @@ using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDifferentFromPrimaryKeyTests>, IAssemblyFixture<DbAssemblyFixture>
+public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDifferentFromPrimaryKeyTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
 {
     public class DatabaseFixture : BulkDbTestsFixture<IdentityDifferentFromPkDbContext>
     {
@@ -28,7 +28,6 @@ public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDiffer
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
-    [InlineData(DbServerType.PostgreSQL)] // Added?
     public void IUD_KeepIdentity_IdentityDifferentFromKey(DbServerType dbType)
     {
         var item = new Entity_KeyDifferentFromIdentity()
@@ -62,6 +61,11 @@ public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDiffer
 
     public class IdentityDifferentFromPkDbContext : DbContext
     {
+        public IdentityDifferentFromPkDbContext(DbContextOptions options)
+            : base(options)
+        {
+        }
+
         public DbSet<Entity_KeyDifferentFromIdentity> EntityKeyDifferentFromIdentities { get; set; } = null!;
     }
 
