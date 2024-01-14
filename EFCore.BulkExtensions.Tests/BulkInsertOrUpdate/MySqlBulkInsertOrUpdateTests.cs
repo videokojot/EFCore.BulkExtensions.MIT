@@ -19,6 +19,7 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         _dbFixture = dbFixture;
     }
 
+    // https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90
     [Theory(Skip = "Tracked by issue: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90")]
     [InlineData(DbServerType.MySQL)]
     public async Task TestBulkInsertOrUpdate(DbServerType dbType)
@@ -81,65 +82,6 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         }
     }
 
-    [Theory]
-    [InlineData(DbServerType.MySQL)]
-    public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
-    {
-        var bulkId = Guid.NewGuid();
-
-        var initialItem = new MySqlItem()
-        {
-            StringProperty = "initial1",
-            BulkIdentifier = bulkId,
-            GuidProperty = Guid.NewGuid(),
-        };
-
-        using (var db = _dbFixture.GetDb(dbType))
-        {
-            db.Items.Add(initialItem);
-            db.SaveChanges();
-        }
-
-        var initialItemId = initialItem.Id;
-
-        // Should be inserted
-        var newItem = new MySqlItem()
-        {
-            Id = 0,
-            StringProperty = "insertedByBulk",
-            BulkIdentifier = bulkId,
-            GuidProperty = Guid.NewGuid(),
-        };
-
-        // Should not be updated (since we use insert only new scenario):
-        var updatedItem = new MySqlItem()
-        {
-            Id = initialItemId,
-            BulkIdentifier = bulkId,
-            StringProperty = "updated by Bulks",
-            GuidProperty = Guid.NewGuid(),
-        };
-
-        using (var db = _dbFixture.GetDb(dbType))
-        {
-            var ensureList = new[] { newItem, updatedItem };
-
-            db.BulkInsertOrUpdate(ensureList,
-                                  c => { c.PropertiesToIncludeOnUpdate = new() { "" }; });
-        }
-
-        var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
-
-        Assert.Equal(2, allItems.Count);
-
-        var insertedItem = allItems.SingleOrDefault(x => x.GuidProperty == newItem.GuidProperty);
-        Assert.NotNull(insertedItem);
-
-        // initial item was not updated:
-        var itemWhichWasNotUpdated = allItems.Single(x => x.GuidProperty == initialItem.GuidProperty);
-        Assert.Equal(initialItem.Id, itemWhichWasNotUpdated.Id);
-        Assert.Equal(initialItem.StringProperty, itemWhichWasNotUpdated.StringProperty);
-    }
 
     public class DatabaseFixture : BulkDbTestsFixture<MySqlSimpleContext>
     {

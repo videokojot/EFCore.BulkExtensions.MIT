@@ -1,6 +1,5 @@
 using EFCore.BulkExtensions.SqlAdapters;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -64,10 +63,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
             var ensureList = new[] { newItem, updatedItem };
 
             db.BulkInsertOrUpdate(ensureList,
-                                  c =>
-                                  {
-                                      c.PropertiesToIncludeOnUpdate = new() { "" };
-                                  });
+                                  c => { c.PropertiesToIncludeOnUpdate = new() { "" }; });
         }
 
         var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
