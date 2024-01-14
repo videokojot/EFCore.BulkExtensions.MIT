@@ -202,7 +202,7 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
             var ensureList = new[] { updatingItem, };
 
             // We throw we cannot set output identity deterministically.
-            var exception = Assert.Throws<InvalidOperationException>(
+            var exception = Assert.Throws<BulkExtensionsException>(
                 () => db.BulkInsertOrUpdate(ensureList, c =>
                 {
                     c.UpdateByProperties = new List<string> { nameof(SimpleItem.StringProperty), nameof(SimpleItem.BulkIdentifier) };
