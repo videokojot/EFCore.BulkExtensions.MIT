@@ -238,19 +238,19 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         };
 
         var ensureList = new List<SimpleItem>() { newItem, };
-        
+
         db.BulkInsertOrUpdate(ensureList, config =>
         {
             config.SetOutputIdentity = true;
             config.PreserveInsertOrder = false;
         });
-        
+
         Assert.NotSame(ensureList[0], newItem); // Items were reloaded
-        
+
         Assert.True(newItem.Id == 0);
         Assert.True(ensureList[0].Id != 0);
     }
-    
+
     // TODO Add simple scenario test
     // TODO Add test for case array as a source
 
@@ -261,10 +261,8 @@ public class EfCoreBulkInsertOrUpdateTests : IClassFixture<EfCoreBulkInsertOrUpd
         return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
     }
 
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(EfCoreBulkInsertOrUpdateTests))
-        {
-        }
+        protected override string DbName => nameof(EfCoreBulkInsertOrUpdateTests);
     }
 }
