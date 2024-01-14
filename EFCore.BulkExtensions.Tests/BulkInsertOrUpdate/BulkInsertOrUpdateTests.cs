@@ -152,7 +152,6 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
                                   c.UpdateByProperties = new List<string> { nameof(SimpleItem.StringProperty), nameof(SimpleItem.Name) };
                                   c.PreserveInsertOrder = true;
                                   c.SetOutputNonIdentityColumns = false; 
-                                  HERE!!!
                               });
 
         var fromDb = db.SimpleItems.SingleOrDefault(x => x.GuidProperty == newItem.GuidProperty);
