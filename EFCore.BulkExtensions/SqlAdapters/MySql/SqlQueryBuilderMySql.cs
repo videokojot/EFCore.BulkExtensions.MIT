@@ -18,13 +18,15 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <param name="useTempDb"></param>
     public static string CreateTableCopy(string existingTableName, string newTableName, bool useTempDb)
     {
-        string keywordTemp = useTempDb ? "TEMPORARY " : ""; 
+        string keywordTemp = useTempDb ? "TEMPORARY " : "";
         var query = $"CREATE {keywordTemp}TABLE {newTableName} " +
-                $"SELECT * FROM {existingTableName} " +
-                "LIMIT 0;";
+                    $"SELECT * FROM {existingTableName} " +
+                    "LIMIT 0;";
         query = query.Replace("[", "").Replace("]", "");
+
         return query;
     }
+
     /// <summary>
     /// Generates SQL query to drop table
     /// </summary>
@@ -36,8 +38,10 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         string keywordTemp = isTempTable ? "TEMPORARY " : "";
         var query = $"DROP {keywordTemp}TABLE IF EXISTS {tableName}";
         query = query.Replace("[", "").Replace("]", "");
+
         return query;
     }
+
     /// <summary>
     /// Returns a list of columns for the given table
     /// </summary>
@@ -46,6 +50,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     public static List<string> GetColumnList(TableInfo tableInfo, OperationType operationType)
     {
         var tempDict = tableInfo.PropertyColumnNamesDict;
+
         if (operationType == OperationType.Insert && tableInfo.PropertyColumnNamesDict.Any()) // Only OnInsert omit colums with Default values
         {
             tableInfo.PropertyColumnNamesDict = tableInfo.PropertyColumnNamesDict.Where(a => !tableInfo.DefaultValueProperties.Contains(a.Key)).ToDictionary(a => a.Key, a => a.Value);
@@ -58,6 +63,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
         bool keepIdentity = tableInfo.BulkConfig.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
         var uniquColumnName = tableInfo.PrimaryKeysPropertyColumnNameDict.Values.ToList().FirstOrDefault();
+
         if (!keepIdentity && tableInfo.HasIdentity && (operationType == OperationType.Insert || tableInfo.IdentityColumnName != uniquColumnName))
         {
             var identityPropertyName = tableInfo.PropertyColumnNamesDict.SingleOrDefault(a => a.Value == tableInfo.IdentityColumnName).Key;
@@ -71,21 +77,19 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL merge statement
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="tableInfo"></param>
-    /// <param name="operationType"></param>
-    /// <exception cref="NotImplementedException"></exception>
     public static string MergeTable<T>(TableInfo tableInfo, OperationType operationType) where T : class
     {
         var columnsList = GetColumnList(tableInfo, operationType);
+
         if (operationType == OperationType.InsertOrUpdateOrDelete)
         {
             throw new NotImplementedException($"For MySql method {OperationType.InsertOrUpdateOrDelete} is not yet supported. Use combination of InsertOrUpdate with Read and Delete");
         }
 
         string query;
-        var firstPrimaryKey = tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;
-        if(operationType == OperationType.Delete)
+        var firstPrimaryKey = tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Value;
+
+        if (operationType == OperationType.Delete)
         {
             query = "delete A " +
                     $"FROM {tableInfo.FullTableName} AS A " +
@@ -97,11 +101,25 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
             var columnsListEquals = GetColumnList(tableInfo, OperationType.Insert);
             var columnsToUpdate = columnsListEquals.Where(c => tableInfo.PropertyColumnNamesUpdateDict.ContainsValue(c)).ToList();
             var equalsColumns = SqlQueryBuilder.GetCommaSeparatedColumns(columnsToUpdate, equalsTable: "EXCLUDED").Replace("[", "").Replace("]", "");
-        
+
+            string updateAction;
+
+            if (string.IsNullOrEmpty(equalsColumns))
+            {
+                // This is 'do nothing' on update:
+                updateAction = $"ON DUPLICATE KEY UPDATE {firstPrimaryKey} = EXCLUDED.{firstPrimaryKey}";
+            }
+            else
+            {
+                updateAction = $"ON DUPLICATE KEY UPDATE {equalsColumns}";
+            }
+
             query = $"INSERT INTO {tableInfo.FullTableName} ({commaSeparatedColumns}) " +
                     $"SELECT {commaSeparatedColumns} FROM {tableInfo.FullTempTableName} AS EXCLUDED " +
-                    "ON DUPLICATE KEY UPDATE " +
-                    $"{equalsColumns}; ";
+                    updateAction +
+                    " ;";
+            ;
+
             if (tableInfo.CreatedOutputTable)
             {
                 if (operationType == OperationType.Insert || operationType == OperationType.InsertOrUpdate)
@@ -118,21 +136,28 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
                              $"SELECT * FROM {tableInfo.FullTempTableName} ";
                 }
 
-                if (operationType == OperationType.InsertOrUpdate)
-                {
-                    query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
-                             $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
-                             $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
-                             $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
-                             $"WHERE  B.{firstPrimaryKey} IS NULL; ";
-                }
-            
+                // This also is commented in original code, just ignoring the ids of updated values.
+                // So the set output identity just does not work on MySql.
+                // See: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90
+
+                // if (operationType == OperationType.InsertOrUpdate)
+                // {
+                //     // We cannot refer to FullTempOutputTableName twice in one query. See:
+                //     // https://dev.mysql.com/doc/refman/8.0/en/temporary-table-problems.html
+                //     // So we need to find a way to 
+                //     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
+                //              $"SELECT A.* FROM {tableInfo.FullTempTableName} A " +
+                //              $"LEFT OUTER JOIN {tableInfo.FullTempOutputTableName} B " +
+                //              $" ON A.{firstPrimaryKey} = B.{firstPrimaryKey} " +
+                //              $"WHERE  B.{firstPrimaryKey} IS NULL; ";
+                // }
             }
         }
-        
+
         query = query.Replace("[", "").Replace("]", "");
 
         Dictionary<string, string>? sourceDestinationMappings = tableInfo.BulkConfig.CustomSourceDestinationMappingColumns;
+
         if (tableInfo.BulkConfig.CustomSourceTableName != null && sourceDestinationMappings != null && sourceDestinationMappings.Count > 0)
         {
             var textSelect = "SELECT ";
@@ -140,6 +165,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
             int startIndex = query.IndexOf(textSelect);
             var qSegment = query[startIndex..query.IndexOf(textFrom)];
             var qSegmentUpdated = qSegment;
+
             foreach (var mapping in sourceDestinationMappings)
             {
                 var propertyFormated = $"{mapping.Value}";
@@ -150,13 +176,16 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
                     qSegmentUpdated = qSegmentUpdated.Replace(propertyFormated, $"{sourceProperty}");
                 }
             }
+
             if (qSegment != qSegmentUpdated)
             {
                 query = query.Replace(qSegment, qSegmentUpdated);
             }
         }
+
         return query;
     }
+
     /// <summary>
     /// Generates SQL query to select output from a table
     /// </summary>
@@ -165,9 +194,10 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     public override string SelectFromOutputTable(TableInfo tableInfo)
     {
         List<string> columnsNames = tableInfo.OutputPropertyColumnNamesDict.Values.ToList();
-        var query = $"SELECT {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName}"
-                    + (tableInfo.BulkConfig.OutputTableHasSqlActionColumn ? $" WHERE {tableInfo.SqlActionIUD} <> 'D'" : ""); // Filter out the information about deleted rows, not needed for setting output identity
+        var query = $"SELECT {SqlQueryBuilder.GetCommaSeparatedColumns(columnsNames)} FROM {tableInfo.FullTempOutputTableName}" +
+                    (tableInfo.BulkConfig.OutputTableHasSqlActionColumn ? $" WHERE {tableInfo.SqlActionIUD} <> 'D'" : ""); // Filter out the information about deleted rows, not needed for setting output identity
         query = query.Replace("[", "").Replace("]", "");
+
         return query;
     }
 
@@ -186,7 +216,8 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         var schemaDash = tableInfo.Schema == null ? "" : $"{tableInfo.Schema}_";
         var uniqueConstrainName = $"tempUniqueIndex_{schemaDash}{tableName}_{uniqueColumnNamesDash}";
 
-        var uniqueColumnNamesComma = string.Join(",", uniqueColumnNames); // TODO When Column is string without defined max length, it should be UNIQUE (`Name`(255)); otherwise exception: BLOB/TEXT column 'Name' used in key specification without a key length'
+        var uniqueColumnNamesComma =
+            string.Join(",", uniqueColumnNames); // TODO When Column is string without defined max length, it should be UNIQUE (`Name`(255)); otherwise exception: BLOB/TEXT column 'Name' used in key specification without a key length'
         uniqueColumnNamesComma = "`" + uniqueColumnNamesComma;
         uniqueColumnNamesComma = uniqueColumnNamesComma.Replace(",", "`, `");
         var uniqueColumnNamesFormated = uniqueColumnNamesComma.TrimEnd(',');
@@ -195,6 +226,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         var q = $@"ALTER TABLE {fullTableNameFormated} " +
                 $@"ADD CONSTRAINT `{uniqueConstrainName}` " +
                 $@"UNIQUE ({uniqueColumnNamesFormated})";
+
         return q;
     }
 
@@ -215,6 +247,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
         var q = $@"ALTER TABLE {fullTableNameFormated} " +
                 $@"DROP INDEX `{uniqueConstrainName}`;";
+
         return q;
     }
 
@@ -233,6 +266,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
         var q = $@"SELECT DISTINCT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE " +
                 $@"CONSTRAINT_TYPE = 'UNIQUE' AND CONSTRAINT_NAME = '{uniqueConstrainName}';";
+
         return q;
     }
 

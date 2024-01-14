@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.ComponentModel;
-using System.Reflection;
 
 namespace EFCore.BulkExtensions.SqlAdapters;
 
@@ -12,123 +12,84 @@ public enum DbServerType
     /// <summary>
     /// Indicates database is Microsoft's SQL Server
     /// </summary>
-    [Description("SqlServer")]
-    SQLServer,
+    [Description("SqlServer")] SQLServer,
 
     /// <summary>
     /// Indicates database is SQL Lite
     /// </summary>
-    [Description("SQLite")]
-    SQLite,
+    [Description("SQLite")] SQLite,
 
     /// <summary>
     /// Indicates database is Postgres
     /// </summary>
-    [Description("PostgreSql")]
-    PostgreSQL,
+    [Description("PostgreSql")] PostgreSQL,
 
     /// <summary>
     ///  Indicates database is MySQL
     /// </summary>
-    [Description("MySql")]
-    MySQL,
+    [Description("MySql")] MySQL,
 }
 
-#pragma warning disable CS1591 // No XML comment required here
 public static class SqlAdaptersMapping
 {
-    public static string? ProviderName { get; set; }
-
-    public static DbServerType DbServerType { get; set; }
-
-    private static IDbServer? _dbServer { get; set; }
+    private static IDbServer? _sqlLite;
+    private static IDbServer? _msSql;
+    private static IDbServer? _mySql;
+    private static IDbServer? _postgreSql;
 
     /// <summary>
     /// Contains a list of methods to generate Adapters and helpers instances
     /// </summary>
-    public static IDbServer? DbServer {
-        get
+    public static IDbServer DbServer(this DbContext dbContext)
+    {
+        //Context.Database. methods: -IsSqlServer() -IsNpgsql() -IsMySql() -IsSqlite() requires specific provider so instead here used -ProviderName
+        
+        var providerName = dbContext.Database.ProviderName;
+        Type? dbServerType;
+        var efCoreBulkExtensionsSqlAdaptersText = "EFCore.BulkExtensions.SqlAdapters";
+        
+        IDbServer dbServerInstance;
+
+        if (providerName?.ToLower().EndsWith(DbServerType.PostgreSQL.ToString().ToLower()) ?? false)
         {
-            //Context.Database. methods: -IsSqlServer() -IsNpgsql() -IsMySql() -IsSqlite() requires specific provider so instead here used -ProviderName
-
-            DbServerType serverType = DbServerType.SQLServer;
-            if (ProviderName?.ToLower().EndsWith(DbServerType.PostgreSQL.ToString().ToLower()) ?? false)
-            {
-                serverType = DbServerType.PostgreSQL;
-            }
-            else if (ProviderName?.ToLower().EndsWith(DbServerType.MySQL.ToString().ToLower()) ?? false)
-            {
-                serverType = DbServerType.MySQL;
-            }
-            else if(ProviderName?.ToLower().EndsWith(DbServerType.SQLite.ToString().ToLower()) ?? false)
-            {
-                serverType = DbServerType.SQLite;
-            }
-
-            if (_dbServer == null || _dbServer.Type != serverType)
-            {
-                string EFCoreBulkExtensionsSqlAdaptersTEXT = "EFCore.BulkExtensions.SqlAdapters";
-                Type? dbServerType = null;
-
-                if (serverType == DbServerType.SQLServer)
-                {
-                    dbServerType = Type.GetType(EFCoreBulkExtensionsSqlAdaptersTEXT + ".SqlServer.SqlServerDbServer");
-                }
-                else if (serverType == DbServerType.PostgreSQL)
-                {
-                    dbServerType = Type.GetType(EFCoreBulkExtensionsSqlAdaptersTEXT + ".PostgreSql.PostgreSqlDbServer");
-                }
-                else if (serverType == DbServerType.MySQL)
-                {
-                    dbServerType = Type.GetType(EFCoreBulkExtensionsSqlAdaptersTEXT + ".MySql.MySqlDbServer");
-                }
-                else if (serverType == DbServerType.SQLite)
-                {
-                    dbServerType = Type.GetType(EFCoreBulkExtensionsSqlAdaptersTEXT + ".SQLite.SqlLiteDbServer");
-                }
-
-                var dbServerInstance = Activator.CreateInstance(dbServerType ?? typeof(int));
-                _dbServer = dbServerInstance as IDbServer;
-            }
-            return _dbServer;
+            dbServerType = Type.GetType(efCoreBulkExtensionsSqlAdaptersText + ".PostgreSql.PostgreSqlDbServer");
+            dbServerInstance = _postgreSql ??= (IDbServer)Activator.CreateInstance(dbServerType ?? typeof(int))!;    
         }
-    }
+        else if (providerName?.ToLower().EndsWith(DbServerType.MySQL.ToString().ToLower()) ?? false)
+        {
+            dbServerType = Type.GetType(efCoreBulkExtensionsSqlAdaptersText + ".MySql.MySqlDbServer");
+            dbServerInstance = _mySql ??= (IDbServer)Activator.CreateInstance(dbServerType ?? typeof(int))!;
 
-#pragma warning restore CS1591 // No XML comment required here
+        }
+        else if (providerName?.ToLower().EndsWith(DbServerType.SQLite.ToString().ToLower()) ?? false)
+        {
+            dbServerType = Type.GetType(efCoreBulkExtensionsSqlAdaptersText + ".SQLite.SqlLiteDbServer");
+            dbServerInstance = _sqlLite ??= (IDbServer)Activator.CreateInstance(dbServerType ?? typeof(int))!;
+        }
+        else
+        {
+            dbServerType = Type.GetType(efCoreBulkExtensionsSqlAdaptersText + ".SqlServer.SqlServerDbServer");
+            dbServerInstance = _msSql ??= (IDbServer)Activator.CreateInstance(dbServerType ?? typeof(int))!;
+        }
+
+        return dbServerInstance;
+    }
 
     /// <summary>
     /// Creates the bulk operations adapter
     /// </summary>
     /// <returns></returns>
-    public static ISqlOperationsAdapter CreateBulkOperationsAdapter()
-    {
-        return DbServer!.Adapter;
-    }
+    public static ISqlOperationsAdapter CreateBulkOperationsAdapter(this DbContext dbContext) => DbServer(dbContext).Adapter;
 
     /// <summary>
     /// Returns the Adapter dialect to be used
     /// </summary>
     /// <returns></returns>
-    public static IQueryBuilderSpecialization GetAdapterDialect()
-    {
-        return DbServer!.Dialect;
-    }
+    public static IQueryBuilderSpecialization GetAdapterDialect(this DbContext dbContext) => DbServer(dbContext).Dialect;
 
     /// <summary>
     /// Returns the Database type
     /// </summary>
     /// <returns></returns>
-    public static DbServerType GetDatabaseType()
-    {
-        return DbServer!.Type;
-    }
-
-    /// <summary>
-    /// Returns per provider QueryBuilder instance, containing a compilation of SQL queries used in EFCore.
-    /// </summary>
-    /// <returns></returns>
-    public static SqlAdapters.QueryBuilderExtensions GetQueryBuilder()
-    {
-        return DbServer!.QueryBuilder;
-    }
+    public static DbServerType GetDatabaseType(this DbContext dbContext) => DbServer(dbContext).Type;
 }

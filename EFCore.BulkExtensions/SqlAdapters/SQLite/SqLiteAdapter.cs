@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
@@ -11,12 +10,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.SqlAdapters.SQLite;
+
 /// <inheritdoc/>
 public class SqliteOperationsAdapter : ISqlOperationsAdapter
 {
-    /// <inheritdoc/>
     #region Methods
-    // Insert
+
+    /// <inheritdoc/>
     public void Insert<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress)
     {
         InsertAsync(context, type, entities, tableInfo, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
@@ -28,16 +28,19 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
     {
         await InsertAsync(context, type, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
-    
+
     /// <inheritdoc/>
     public static async Task InsertAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
     {
-        SqliteConnection? connection = (SqliteConnection?)SqlAdaptersMapping.DbServer!.DbConnection;
+        SqliteConnection? connection = (SqliteConnection?)SqlAdaptersMapping.DbServer(context).DbConnection;
+
         if (connection == null)
         {
-            connection = isAsync ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
-                                 : OpenAndGetSqliteConnection(context);
+            connection = isAsync
+                             ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
+                             : OpenAndGetSqliteConnection(context);
         }
+
         bool doExplicitCommit = false;
 
         try
@@ -48,11 +51,13 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 doExplicitCommit = true;
             }
 
-            SqliteTransaction? transaction = (SqliteTransaction?)SqlAdaptersMapping.DbServer!.DbTransaction;
+            SqliteTransaction? transaction = (SqliteTransaction?)tableInfo.DbTransaction;
+
             if (transaction == null)
             {
-                var dbTransaction = doExplicitCommit ? connection.BeginTransaction()
-                                                     : context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
+                var dbTransaction = doExplicitCommit
+                                        ? connection.BeginTransaction()
+                                        : context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
 
                 transaction = (SqliteTransaction?)dbTransaction;
             }
@@ -69,6 +74,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             foreach (var item in entities)
             {
                 LoadSqliteValues(tableInfo, item, command, context);
+
                 if (isAsync)
                 {
                     await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -77,8 +83,10 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 {
                     command.ExecuteNonQuery();
                 }
+
                 ProgressHelper.SetProgress(ref rowsCopied, entities.Count, tableInfo.BulkConfig, progress);
             }
+
             if (doExplicitCommit)
             {
                 transaction?.Commit();
@@ -112,12 +120,14 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
     {
         await MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
-    
+
     /// <inheritdoc/>
-    protected static async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken) where T : class
+    protected static async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
+        where T : class
     {
-        SqliteConnection connection = isAsync ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
-                                                    : OpenAndGetSqliteConnection(context);
+        SqliteConnection connection = isAsync
+                                          ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
+                                          : OpenAndGetSqliteConnection(context);
         bool doExplicitCommit = false;
 
         try
@@ -127,8 +137,10 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 //context.Database.UseTransaction(connection.BeginTransaction());
                 doExplicitCommit = true;
             }
-            var dbTransaction = doExplicitCommit ? connection.BeginTransaction()
-                                                 : context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
+
+            var dbTransaction = doExplicitCommit
+                                    ? connection.BeginTransaction()
+                                    : context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
             var transaction = (SqliteTransaction?)dbTransaction;
 
             var command = GetSqliteCommand(context, type, entities, tableInfo, connection, transaction);
@@ -139,6 +151,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             foreach (var item in entities)
             {
                 LoadSqliteValues(tableInfo, item, command, context);
+
                 if (isAsync)
                 {
                     await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -147,6 +160,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 {
                     command.ExecuteNonQuery();
                 }
+
                 ProgressHelper.SetProgress(ref rowsCopied, entities.Count, tableInfo.BulkConfig, progress);
             }
 
@@ -154,8 +168,9 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             {
                 command.CommandText = SqlQueryBuilderSqlite.SelectLastInsertRowId();
 
-                object? lastRowIdScalar = isAsync ? await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
-                                                       : command.ExecuteScalar();
+                object? lastRowIdScalar = isAsync
+                                              ? await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
+                                              : command.ExecuteScalar();
 
                 SetIdentityForOutput(entities, tableInfo, lastRowIdScalar);
             }
@@ -190,12 +205,13 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
     {
         await ReadAsync(context, type, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
-    
+
     /// <inheritdoc/>
     protected static async Task ReadAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken) where T : class
     {
-        SqliteConnection connection = isAsync ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
-                                                    : OpenAndGetSqliteConnection(context);
+        SqliteConnection connection = isAsync
+                                          ? await OpenAndGetSqliteConnectionAsync(context, cancellationToken).ConfigureAwait(false)
+                                          : OpenAndGetSqliteConnection(context);
         bool doExplicitCommit = false;
         SqliteTransaction? transaction = null;
 
@@ -207,14 +223,16 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 doExplicitCommit = true;
             }
 
-            transaction = doExplicitCommit ? connection.BeginTransaction()
-                                           : (SqliteTransaction?)context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
+            transaction = doExplicitCommit
+                              ? connection.BeginTransaction()
+                              : (SqliteTransaction?)context.Database.CurrentTransaction?.GetUnderlyingTransaction(tableInfo.BulkConfig);
 
             SqliteCommand command = connection.CreateCommand();
             command.Transaction = transaction;
 
             // CREATE
             command.CommandText = SqlQueryBuilderSqlite.CreateTableCopy(tableInfo.FullTableName, tableInfo.FullTempTableName);
+
             if (isAsync)
             {
                 await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -226,8 +244,8 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
 
             tableInfo.BulkConfig.OperationType = OperationType.Insert;
             tableInfo.InsertToTempTable = true;
-            SqlAdaptersMapping.DbServer!.DbConnection = connection;
-            SqlAdaptersMapping.DbServer!.DbTransaction = transaction;
+            tableInfo.DbTransaction = transaction;
+
             // INSERT
             if (isAsync)
             {
@@ -256,6 +274,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
 
             // DROP
             command.CommandText = SqlQueryBuilderSqlite.DropTable(tableInfo.FullTempTableName);
+
             if (isAsync)
             {
                 await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -291,26 +310,23 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             }
         }
     }
+    
+    private static string DeleteTable(string tableName) => $"DELETE FROM {tableName};VACUUM;";
 
     /// <inheritdoc/>
-    public void Truncate(DbContext context, TableInfo tableInfo)
-    {
-        string sql = SqlQueryBuilder.DeleteTable(tableInfo.FullTableName);
-        context.Database.ExecuteSqlRaw(sql);
-    }
+    public void Truncate(DbContext context, TableInfo tableInfo) => context.Database.ExecuteSqlRaw(DeleteTable(tableInfo.FullTableName));
 
     /// <inheritdoc/>
-    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken)
-    {
-        string sql = SqlQueryBuilder.DeleteTable(tableInfo.FullTableName);
-        await context.Database.ExecuteSqlRawAsync(sql, cancellationToken).ConfigureAwait(false);
-    }
+    public async Task TruncateAsync(DbContext context, TableInfo tableInfo, CancellationToken cancellationToken) => await context.Database.ExecuteSqlRawAsync(DeleteTable(tableInfo.FullTableName), cancellationToken).ConfigureAwait(false);
+
     #endregion
 
     #region Connection
+
     internal static async Task<SqliteConnection> OpenAndGetSqliteConnectionAsync(DbContext context, CancellationToken cancellationToken)
     {
         await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+
         return (SqliteConnection)context.Database.GetDbConnection();
     }
 
@@ -320,9 +336,11 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
 
         return (SqliteConnection)context.Database.GetDbConnection();
     }
+
     #endregion
 
     #region SqliteData
+
     internal static SqliteCommand GetSqliteCommand<T>(DbContext context, Type? type, IList<T> entities, TableInfo tableInfo, SqliteConnection connection, SqliteTransaction? transaction)
     {
         SqliteCommand command = connection.CreateCommand();
@@ -334,38 +352,46 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
         {
             case OperationType.Insert:
                 command.CommandText = SqlQueryBuilderSqlite.InsertIntoTable(tableInfo, OperationType.Insert);
+
                 break;
             case OperationType.InsertOrUpdate:
                 command.CommandText = SqlQueryBuilderSqlite.InsertIntoTable(tableInfo, OperationType.InsertOrUpdate);
+
                 break;
             case OperationType.InsertOrUpdateOrDelete:
-                throw new NotSupportedException("'BulkInsertOrUpdateDelete' not supported for Sqlite. Sqlite has only UPSERT statement (analog for MERGE WHEN MATCHED) but no functionality for: 'WHEN NOT MATCHED BY SOURCE THEN DELETE'." +
-                                                " Another way to achieve this is to BulkRead existing data from DB, split list into sublists and call separately Bulk methods for Insert, Update, Delete.");
+                throw new NotSupportedException("'BulkInsertOrUpdateDelete' not supported for Sqlite. Sqlite has only UPSERT statement (analog for MERGE WHEN MATCHED) but no functionality for: 'WHEN NOT MATCHED BY SOURCE THEN DELETE'."
+                                                + " Another way to achieve this is to BulkRead existing data from DB, split list into sublists and call separately Bulk methods for Insert, Update, Delete.");
             case OperationType.Update:
                 command.CommandText = SqlQueryBuilderSqlite.UpdateSetTable(tableInfo);
+
                 break;
             case OperationType.Delete:
                 command.CommandText = SqlQueryBuilderSqlite.DeleteFromTable(tableInfo);
+
                 break;
         }
 
         type = tableInfo.HasAbstractList ? entities[0]?.GetType() : type;
+
         if (type is null)
         {
             throw new ArgumentException("Unable to determine entity type");
         }
+
         var entityType = context.Model.FindEntityType(type);
         var entityPropertiesDict = entityType?.GetProperties().Where(a => tableInfo.PropertyColumnNamesDict.ContainsKey(a.Name)).ToDictionary(a => a.Name, a => a);
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-        var entityShadowFkPropertiesDict = entityType?.GetProperties().Where(a => a.IsShadowProperty() &&
-                                                                   a.IsForeignKey() &&
-                                                                   a.GetContainingForeignKeys().FirstOrDefault()?.DependentToPrincipal?.Name != null)
-                                                             .ToDictionary(x => x.GetContainingForeignKeys()?.First()?.DependentToPrincipal?.Name ?? string.Empty, a => a);
+        var entityShadowFkPropertiesDict = entityType?.GetProperties()
+                                                     .Where(a => a.IsShadowProperty()
+                                                                 && a.IsForeignKey()
+                                                                 && a.GetContainingForeignKeys().FirstOrDefault()?.DependentToPrincipal?.Name != null)
+                                                     .ToDictionary(x => x.GetContainingForeignKeys()?.First()?.DependentToPrincipal?.Name ?? string.Empty, a => a);
 
         foreach (var property in properties)
         {
             IProperty? propertyEntityType = null;
+
             if (entityPropertiesDict?.ContainsKey(property.Name) ?? false)
             {
                 propertyEntityType = entityPropertiesDict[property.Name];
@@ -387,6 +413,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
         }
 
         var shadowProperties = tableInfo.ShadowProperties;
+
         foreach (var shadowProperty in shadowProperties)
         {
             var parameter = new SqliteParameter($"@{shadowProperty}", typeof(string));
@@ -394,17 +421,20 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
         }
 
         command.Prepare(); // Not Required but called for efficiency (prepared should be little faster)
+
         return command;
     }
 
     internal static void LoadSqliteValues<T>(TableInfo tableInfo, T? entity, SqliteCommand command, DbContext dbContext)
     {
         var propertyColumnsDict = tableInfo.PropertyColumnNamesDict;
+
         foreach (var propertyColumn in propertyColumnsDict)
         {
             var isShadowProperty = tableInfo.ShadowProperties.Contains(propertyColumn.Key);
             string parameterName = propertyColumn.Key.Replace(".", "_");
             object? value = null;
+
             if (!isShadowProperty)
             {
                 if (propertyColumn.Key.Contains('.')) // ToDo: change IF clause to check for NavigationProperties, optimise, integrate with same code segment from LoadData method
@@ -416,6 +446,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                     var ownedProperty = ownedFastProperty.Property;
 
                     var propertyType = Nullable.GetUnderlyingType(ownedProperty.GetType()) ?? ownedProperty.GetType();
+
                     if (!command.Parameters.Contains("@" + parameterName))
                     {
                         var parameter = new SqliteParameter($"@{parameterName}", propertyType);
@@ -446,6 +477,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                         var foreignKey = property.GetContainingForeignKeys().FirstOrDefault();
                         var principalNavigation = foreignKey?.DependentToPrincipal;
                         var pkPropertyName = foreignKey?.PrincipalKey.Properties.FirstOrDefault()?.Name;
+
                         if (principalNavigation is not null && pkPropertyName is not null)
                         {
                             pkPropertyName = principalNavigation.Name + "_" + pkPropertyName;
@@ -482,7 +514,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             command.Parameters[$"@{parameterName}"].Value = value ?? DBNull.Value;
         }
     }
-    
+
     /// <inheritdoc/>
     public static void SetIdentityForOutput<T>(IList<T> entities, TableInfo tableInfo, object? lastRowIdScalar)
     {
@@ -493,6 +525,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
 
         string idTypeName = identityFastProperty.Property.PropertyType.Name;
         object? idValue = null;
+
         for (int i = entities.Count - 1; i >= 0; i--)
         {
             idValue = idTypeName switch
@@ -507,6 +540,7 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
                 "SByte" => (sbyte)counter,
                 _ => counter,
             };
+
             if (entities[i] is not null)
             {
                 identityFastProperty.Set(entities[i]!, idValue);
@@ -515,5 +549,6 @@ public class SqliteOperationsAdapter : ISqlOperationsAdapter
             counter--;
         }
     }
+
     #endregion
 }

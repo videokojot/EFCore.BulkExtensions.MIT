@@ -8,11 +8,13 @@ I forked the project at commit [5bf938a422](https://github.com/borisdj/EFCore.Bu
 ### Why choose this fork instead of original version?
 - You need MIT version (obviously).
 - You care about **SetOutputIdentity**. In fork I fixed multiple bugs around setting output identity and added tests for it.
-- This fork fixes numerous issues not fixed in original:
-  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1248
-  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1249
-  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1250
-  - https://github.com/borisdj/EFCore.BulkExtensions/issues/1251
+- This fork fixes issues not fixed in original:
+  - [Fix Insert New Only](https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/45)
+  - [Fix Output Identity not set when column is null](https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/46)
+  - [Output Identity not set when db columns are not unique](https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/48)
+  - [entitiesWithOutputIdentity contains the ids rather than the entities](https://github.com/borisdj/EFCore.BulkExtensions/issues/1297)
+- Other improvements:
+  - [SQL Providers made Thread Safe](https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/49) 
 - Any fix is also automatically propagated to all major versions (v6/7/8). All major version receives new fixes.
 - You can easily match version to source code on github (see [GitHub Releases](https://github.com/videokojot/EFCore.BulkExtensions.MIT/releases)).
 - You can see that all the test are passing in the released version (in GitHub Actions or run tests easily locally yourself (just Docker needed))

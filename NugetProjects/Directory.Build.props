@@ -3,7 +3,7 @@
         <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
-        <BaseVersion>11.0</BaseVersion>
+        <BaseVersion>14.0</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
         <Authors>borisdj, Jindrich Cincibuch</Authors>
@@ -15,8 +15,6 @@
         <RepositoryUrl>https://github.com/videokojot/EFCore.BulkExtensions.MIT</RepositoryUrl>
         <RepositoryType>Git</RepositoryType>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-        <!--        <AssemblyVersion>6.6.5.0</AssemblyVersion>-->
-        <!--        <FileVersion>6.6.5.0</FileVersion>-->
         <!--        <SignAssembly>true</SignAssembly>-->
         <!--        <AssemblyOriginatorKeyFile>..\Keys\EFCore.BulkExtensions.snk</AssemblyOriginatorKeyFile>-->
         <!--        <DelaySign>false</DelaySign>-->
@@ -26,32 +24,47 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <NoWarn>$(NoWarn);CS1591</NoWarn>
     </PropertyGroup>
-
+    
     <Choose>
         <When Condition="$(MSBuildProjectName.Contains('v6'))">
             <PropertyGroup>
                 <Version>6.$(BaseVersion)</Version>
                 <TargetFramework>net6.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V6</DefineConstants>
+                <AssemblyVersion>6.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>6.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v7'))">
             <PropertyGroup>
                 <Version>7.$(BaseVersion)</Version>
                 <TargetFramework>net6.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V7</DefineConstants>
+                <AssemblyVersion>7.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>7.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
         <When Condition="$(MSBuildProjectName.Contains('v8'))">
             <PropertyGroup>
                 <Version>8.$(BaseVersion)-preview1</Version>
                 <TargetFramework>net8.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V8</DefineConstants>
+                <AssemblyVersion>8.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>8.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
         <Otherwise>
         </Otherwise>
     </Choose>
 
-    <!--    Add whole core lib -->
-    <Import Project="..\EFCore.BulkExtensions\EFCore.BulkExtensions.projitems" Label="Shared"/>
+    <!--    Add Source files via Shared proejct (commented, since we use the simple include below, not sure which way is cleaner) -->
+    <!--    <Import Project="..\EFCore.BulkExtensions\EFCore.BulkExtensions.projitems" Label="Shared"/>-->
+
+    <!--  Add Source Files  -->
+    <ItemGroup>
+        <Compile Include="..\..\EFCore.BulkExtensions\**\*.cs"/>
+        <None Include="..\..\EFCore.BulkExtensions\**\*.cs"/>
+    </ItemGroup>
 
     <!--    Exlude specific folders for single provider packages -->
     <Choose>
@@ -114,6 +127,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -124,17 +138,5 @@
         <None Include="..\..\README.md" PackagePath="" Pack="True"/>
         <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE"/>
     </ItemGroup>
-
-    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v6'))">
-        <DefineConstants>$(DefineConstants);V6</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v7'))">
-        <DefineConstants>$(DefineConstants);V7</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v8'))">
-        <DefineConstants>$(DefineConstants);V8</DefineConstants>
-    </PropertyGroup>
 
 </Project>

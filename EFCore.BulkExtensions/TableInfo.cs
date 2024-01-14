@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -22,7 +23,6 @@ namespace EFCore.BulkExtensions;
 /// </summary>
 public class TableInfo
 {
-#pragma warning disable CS1591 // No XML comments required here.
     public string? Schema { get; set; }
     public string SchemaFormated => Schema != null ? $"[{Schema}]." : "";
     public string? TempSchema { get; set; }
@@ -79,45 +79,27 @@ public class TableInfo
 
     public StoreObjectIdentifier ObjectIdentifier { get; set; }
 
-    public string SqlActionIUD => "MergeActionIUD";
+    public DbTransaction? DbTransaction { get; set; }
+    
+    public string SqlActionIUD => "EFCore_BulkExtensions_MIT_MergeActionIUD";
 
-    ////Sqlite
-    //internal SqliteConnection? SqliteConnection { get; set; }
-    //internal SqliteTransaction? SqliteTransaction { get; set; }
-
-
-    ////PostgreSql
-    //internal NpgsqlConnection? NpgsqlConnection { get; set; }
-    ////internal NpgsqlTransaction? NpgsqlTransaction { get; set; }
-
-    ////MySql
-    //internal MySqlConnection? MySqlConnection { get; set; }
-
-
+ 
 #pragma warning restore CS1591 // No XML comments required here.
 
     /// <summary>
     /// Creates an instance of TableInfo
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="operationType"></param>
-    /// <param name="bulkConfig"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
     public static TableInfo CreateInstance<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig)
     {
         var tableInfo = new TableInfo
         {
             NumberOfEntities = entities.Count,
-            BulkConfig = bulkConfig ?? new BulkConfig() { }
+            BulkConfig = bulkConfig ?? new BulkConfig(),
         };
         tableInfo.BulkConfig.OperationType = operationType;
 
         bool isExplicitTransaction = context.Database.GetDbConnection().State == ConnectionState.Open;
-        if (tableInfo.BulkConfig.UseTempDB == true && !isExplicitTransaction && (operationType != OperationType.Insert || tableInfo.BulkConfig.SetOutputIdentity))
+        if (tableInfo.BulkConfig.UseTempDB && !isExplicitTransaction && (operationType != OperationType.Insert || tableInfo.BulkConfig.SetOutputIdentity))
         {
             throw new InvalidOperationException("When 'UseTempDB' is set then BulkOperation has to be inside Transaction. " +
                                                 "Otherwise destination table gets dropped too early because transaction ends before operation is finished."); // throws: 'Cannot access destination table'
@@ -274,7 +256,7 @@ public class TableInfo
 
         if (isSqlServer || isNpgsql || isMySql)
         {
-            var strategyName = SqlAdaptersMapping.DbServer!.ValueGenerationStrategy;
+            var strategyName = SqlAdaptersMapping.DbServer(context).ValueGenerationStrategy;
             if (!strategyName.Contains(":Value"))
             {
                 strategyName = strategyName.Replace("Value", ":Value"); //example 'SqlServer:ValueGenerationStrategy'
@@ -286,7 +268,7 @@ public class TableInfo
                 bool hasIdentity = false;
                 if (annotation != null)
                 {
-                    hasIdentity = SqlAdaptersMapping.DbServer!.PropertyHasIdentity(annotation);
+                    hasIdentity = SqlAdaptersMapping.DbServer(context).PropertyHasIdentity(annotation);
                 }
                 if (hasIdentity)
                 {
@@ -565,16 +547,18 @@ public class TableInfo
                     var ownedProperties = property.PropertyType.GetProperties();
                     foreach (var ownedProperty in ownedProperties)
                     {
-                        if (ownedEntityPropertyNameColumnNameDict.ContainsKey(ownedProperty.Name))
+                        if (ownedEntityPropertyNameColumnNameDict.TryGetValue(ownedProperty.Name, out var columnName))
                         {
                             string ownedPropertyFullName = property.Name + "." + ownedProperty.Name;
                             var ownedPropertyType = Nullable.GetUnderlyingType(ownedProperty.PropertyType) ?? ownedProperty.PropertyType;
 
                             bool doAddProperty = true;
+                            
                             if (AreSpecifiedPropertiesToInclude && !(BulkConfig.PropertiesToInclude?.Contains(ownedPropertyFullName) ?? false))
                             {
                                 doAddProperty = false;
                             }
+                            
                             if (AreSpecifiedPropertiesToExclude && (BulkConfig.PropertiesToExclude?.Contains(ownedPropertyFullName) ?? false))
                             {
                                 doAddProperty = false;
@@ -582,7 +566,6 @@ public class TableInfo
 
                             if (doAddProperty)
                             {
-                                string columnName = ownedEntityPropertyNameColumnNameDict[ownedProperty.Name];
                                 PropertyColumnNamesDict.Add(ownedPropertyFullName, columnName);
                                 PropertyColumnNamesCompareDict.Add(ownedPropertyFullName, columnName);
                                 PropertyColumnNamesUpdateDict.Add(ownedPropertyFullName, columnName);
@@ -629,69 +612,6 @@ public class TableInfo
     /// <summary>
     /// Checks if the table exists
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    public static async Task<bool> CheckTableExistAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
-    {
-        if (isAsync)
-        {
-            await context.Database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.OpenConnection();
-        }
-
-        bool tableExist = false;
-        try
-        {
-            var sqlConnection = context.Database.GetDbConnection();
-            var currentTransaction = context.Database.CurrentTransaction;
-
-            using var command = sqlConnection.CreateCommand();
-            if (currentTransaction != null)
-                command.Transaction = currentTransaction.GetDbTransaction();
-            command.CommandText = SqlQueryBuilder.CheckTableExist(tableInfo.FullTempTableName, tableInfo.BulkConfig.UseTempDB);
-
-            if (isAsync)
-            {
-                using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                if (reader.HasRows)
-                {
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-            else
-            {
-                using var reader = command.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    while (reader.Read())
-                    {
-                        tableExist = (int)reader[0] == 1;
-                    }
-                }
-            }
-        }
-        finally
-        {
-            if (isAsync)
-            {
-                await context.Database.CloseConnectionAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                context.Database.CloseConnection();
-            }
-        }
-        return tableExist;
-    }
 
     public record struct MergeActionCounts(int Inserted, int Updated, int Deleted);
 
@@ -780,77 +700,11 @@ public class TableInfo
         }
     }
 
-    /// <summary>
-    /// Checks the number of updated entities
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    protected async Task<int> GetNumberUpdatedAsync(DbContext context, bool isAsync, CancellationToken cancellationToken)
-    {
-        var resultParameter = (IDbDataParameter?)Activator.CreateInstance(typeof(Microsoft.Data.SqlClient.SqlParameter));
-        if (resultParameter is null)
-        {
-            throw new ArgumentException("Unable to create an instance of IDbDataParameter");
-        }
-        resultParameter.ParameterName = "@result";
-        resultParameter.DbType = DbType.Int32;
-        resultParameter.Direction = ParameterDirection.Output;
-        string sqlQueryCount = SqlQueryBuilder.SelectCountIsUpdateFromOutputTable(this);
-
-        var sqlSetResult = $"SET @result = ({sqlQueryCount});";
-        if (isAsync)
-        {
-            await context.Database.ExecuteSqlRawAsync(sqlSetResult, new object[] { resultParameter }, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.ExecuteSqlRaw(sqlSetResult, resultParameter);
-        }
-        return (int)resultParameter.Value!;
-    }
-
-    /// <summary>
-    /// Checks the number of deleted entities
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
-    protected async Task<int> GetNumberDeletedAsync(DbContext context, bool isAsync, CancellationToken cancellationToken)
-    {
-        var resultParameter = (IDbDataParameter?)Activator.CreateInstance(typeof(Microsoft.Data.SqlClient.SqlParameter));
-        if (resultParameter is null)
-        {
-            throw new ArgumentException("Unable to create an instance of IDbDataParameter");
-        }
-        resultParameter.ParameterName = "@result";
-        resultParameter.DbType = DbType.Int32;
-        resultParameter.Direction = ParameterDirection.Output;
-        string sqlQueryCount = SqlQueryBuilder.SelectCountIsDeleteFromOutputTable(this);
-
-        var sqlSetResult = $"SET @result = ({sqlQueryCount});";
-        if (isAsync)
-        {
-            await context.Database.ExecuteSqlRawAsync(sqlSetResult, new object[] { resultParameter }, cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            context.Database.ExecuteSqlRaw(sqlSetResult, resultParameter);
-        }
-        return (int)resultParameter.Value!;
-    }
-
     #endregion
 
     /// <summary>
     /// Returns the unique property values
     /// </summary>
-    /// <param name="entity"></param>
-    /// <param name="propertiesNames"></param>
-    /// <param name="fastPropertyDict"></param>
-    /// <returns></returns>
     public static string GetUniquePropertyValues(object entity, List<string> propertiesNames, Dictionary<string, FastProperty> fastPropertyDict)
     {
         StringBuilder uniqueBuilder = new(1024);
@@ -958,13 +812,10 @@ public class TableInfo
         }
     }
     #endregion
+    
     /// <summary>
     /// Sets the identity preserve order
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="tableInfo"></param>
-    /// <param name="entities"></param>
-    /// <param name="reset"></param>
     public void CheckToSetIdentityForPreserveOrder<T>(TableInfo tableInfo, IList<T> entities, bool reset = false)
     {
         string identityPropertyName = PropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key;
@@ -975,7 +826,7 @@ public class TableInfo
                                                   PrimaryKeysPropertyColumnNameDict?.Select(a => a.Value).First() == IdentityColumnName;
 
         var operationType = tableInfo.BulkConfig.OperationType;
-        if (doSetIdentityColumnsForInsertOrder == true)
+        if (doSetIdentityColumnsForInsertOrder)
         {
             if (operationType == OperationType.Insert) // Insert should either have all zeros for automatic order, or they can be manually set
             {
@@ -995,7 +846,6 @@ public class TableInfo
                                 (operationType == OperationType.Update || operationType == OperationType.InsertOrUpdate || operationType == OperationType.InsertOrUpdateOrDelete);
             var entitiesExistingDict = new Dictionary<long, T>();
             var entitiesNew = new List<T>();
-            var entitiesSorted = new List<T>();
 
             long i = -entities.Count;
             foreach (var entity in entities)
@@ -1038,7 +888,7 @@ public class TableInfo
             }
             if (sortEntities)
             {
-                entitiesSorted = entitiesExistingDict.OrderBy(a => a.Key).Select(a => a.Value).ToList();
+                List<T> entitiesSorted = entitiesExistingDict.OrderBy(a => a.Key).Select(a => a.Value).ToList();
                 entitiesSorted.AddRange(entitiesNew); // then append new ones
                 tableInfo.EntitiesSortedReference = entitiesSorted.Cast<object>().ToList();
             }
@@ -1046,13 +896,8 @@ public class TableInfo
     }
 
     /// <summary>
-    /// Loads the ouput entities
+    /// Loads the output entities
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="sqlSelect"></param>
-    /// <returns></returns>
     public List<T> LoadOutputEntities<T>(DbContext context, Type type, string sqlSelect) where T : class
     {
         List<T> existingEntities;
@@ -1074,10 +919,6 @@ public class TableInfo
     /// <summary>
     /// Updates the entities' identity field
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="tableInfo"></param>
-    /// <param name="entities"></param>
-    /// <param name="entitiesWithOutputIdentity"></param>
     public void UpdateEntitiesIdentity<T>(TableInfo tableInfo, IList<T> entities, IList<object> entitiesWithOutputIdentity)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
@@ -1091,13 +932,13 @@ public class TableInfo
                 tableInfo.BulkConfig.TimeStampInfo = new TimeStampInfo
                 {
                     NumberOfSkippedForUpdate = countDiff,
-                    EntitiesOutput = entitiesWithOutputIdentity.Cast<object>().ToList()
+                    EntitiesOutput = entitiesWithOutputIdentity.ToList()
                 };
                 return;
             }
             
             
-            var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Values;
+            var customPK = tableInfo.PrimaryKeysPropertyColumnNameDict.Keys;
 
             if (countDiff < 0)
             {
@@ -1107,8 +948,10 @@ public class TableInfo
 
                 var nonUniqueKeys = entitiesWithOutputIdentity.GroupBy(x => new PrimaryKeysPropertyColumnNameValues(customPK.Select(c => FastPropertyDict[c].Get(x)))).Where(x => x.Count() > 1).Select(x => x.Key).ToList();
 
-                throw new InvalidOperationException("Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
-                                                    + "Keys which matched more rows: " + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
+                throw new BulkExtensionsException(BulkExtensionsExceptionType.CannotSetOutputIdentityForNonUniqueUpdateByProperties,
+                                                  "Items were Inserted/Updated successfully in db, but we cannot set output identity correctly since single source row(s) matched multiple rows in db. "
+                                                  + "Keys which matched more rows: "
+                                                  + string.Join("\n", nonUniqueKeys.Select(x => x.ToLogString())));
             }
 
             if (tableInfo.EntitiesSortedReference != null)
@@ -1200,26 +1043,16 @@ public class TableInfo
     // Once the following Issue gets fixed(expected in EF 3.0) this can be replaced with code segment: DirectQuery
     // https://github.com/aspnet/EntityFrameworkCore/issues/12905
     #region CompiledQuery
-    /// <summary>
-    /// Loads the output data
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="tableInfo"></param>
-    /// <param name="cancellationToken"></param>
-    /// <param name="isAsync"></param>
-    /// <returns></returns>
+
     public async Task LoadOutputDataAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken) where T : class
     {
         bool hasIdentity = OutputPropertyColumnNamesDict.Any(a => a.Value == IdentityColumnName) ||
                            (tableInfo.HasSinglePrimaryKey && tableInfo.DefaultValueProperties.Contains(tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key));
-        int totalNumber = entities.Count;
+
         if (BulkConfig.SetOutputIdentity && hasIdentity)
         {
-            var databaseType = SqlAdaptersMapping.GetDatabaseType();
-            string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer!.QueryBuilder.SelectFromOutputTable(this);
+            var databaseType = SqlAdaptersMapping.GetDatabaseType(context);
+            string sqlQuery = databaseType == DbServerType.SQLServer ? SqlQueryBuilder.SelectFromOutputTable(this) : SqlAdaptersMapping.DbServer(context).QueryBuilder.SelectFromOutputTable(this);
             //var entitiesWithOutputIdentity = await QueryOutputTableAsync<T>(context, sqlQuery).ToListAsync(cancellationToken).ConfigureAwait(false); // TempFIX
             var entitiesWithOutputIdentity = QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
             //var entitiesWithOutputIdentity = (typeof(T) == type) ? QueryOutputTable<object>(context, sqlQuery).ToList() : QueryOutputTable(context, type, sqlQuery).Cast<object>().ToList();
@@ -1250,10 +1083,6 @@ public class TableInfo
     /// <summary>
     /// Queries the output table data
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="sqlQuery"></param>
-    /// <returns></returns>
     protected IEnumerable QueryOutputTable(DbContext context, Type type, string sqlQuery)
     {
         var compiled = EF.CompileQuery(GetQueryExpression(type, sqlQuery));
@@ -1278,13 +1107,9 @@ public class TableInfo
     /// <summary>
     /// Returns an expression for the SQL query
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="sqlQuery"></param>
-    /// <param name="ordered"></param>
-    /// <returns></returns>
     public Expression<Func<DbContext, IQueryable<T>>> GetQueryExpression<T>(string sqlQuery, bool ordered = true) where T : class
     {
-        Expression<Func<DbContext, IQueryable<T>>>? expression = null;
+        Expression<Func<DbContext, IQueryable<T>>>? expression;
         if (BulkConfig.TrackingEntities) // If Else can not be replaced with Ternary operator for Expression
         {
             expression = BulkConfig.IgnoreGlobalQueryFilters ?
@@ -1308,10 +1133,6 @@ public class TableInfo
     /// <summary>
     /// Returns an expression for the SQL query
     /// </summary>
-    /// <param name="entityType"></param>
-    /// <param name="sqlQuery"></param>
-    /// <param name="ordered"></param>
-    /// <returns></returns>
     public Expression<Func<DbContext, IEnumerable>> GetQueryExpression(Type entityType, string sqlQuery, bool ordered = true)
     {
         var parameter = Expression.Parameter(typeof(DbContext), "ctx");
