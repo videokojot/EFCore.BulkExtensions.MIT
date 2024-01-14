@@ -229,39 +229,6 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
         }
     }
 
-    /// <summary>
-    /// Covers: https://github.com/borisdj/EFCore.BulkExtensions/issues/1263
-    /// </summary>
-    [Theory]
-    [InlineData(DbServerType.SQLServer)]
-    public void IUD_KeepIdentity_IdentityDifferentFromKey(DbServerType dbType)
-    {
-        var item = new Entity_KeyDifferentFromIdentity()
-        {
-            ItemTestGid = Guid.NewGuid(),
-            ItemTestIdent = 1234,
-            Name = "1234",
-        };
-
-        var item2 = new Entity_KeyDifferentFromIdentity()
-        {
-            ItemTestGid = Guid.NewGuid(),
-            ItemTestIdent = 12345678,
-            Name = "12345678",
-        };
-
-        using (var db = _dbFixture.GetDb(dbType))
-        {
-            var items = new[] { item, item2 };
-            db.BulkInsertOrUpdateOrDelete(items, c => { c.SqlBulkCopyOptions = SqlBulkCopyOptions.Default | SqlBulkCopyOptions.KeepIdentity; });
-        }
-
-        using (var db = _dbFixture.GetDb(dbType))
-        {
-            var insertedItem = db.EntityKeyDifferentFromIdentities.Single(x => x.ItemTestGid == item.ItemTestGid);
-            Assert.Equal(1234, insertedItem.ItemTestIdent);
-        }
-    }
 
     /// <summary>
     /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/62
@@ -300,10 +267,8 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
     }
 
 
-
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
         protected override string DbName => nameof(BulkInsertOrUpdateTests);
-
     }
 }

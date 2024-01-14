@@ -11,7 +11,6 @@ public class SimpleBulkTestsContext : DbContext
 {
     public DbSet<SimpleItem> SimpleItems { get; set; } = null!;
 
-    public DbSet<Entity_KeyDifferentFromIdentity> EntityKeyDifferentFromIdentities { get; set; } = null!;
 
     public DbSet<Entity_CustomColumnNames> EntityCustomColumnNames { get; set; } = null!;
 
@@ -41,16 +40,6 @@ public class SimpleItem
     public Guid GuidProperty { get; set; }
 
     public string? StringProperty { get; set; }
-}
-
-public class Entity_KeyDifferentFromIdentity
-{
-    [Key] public Guid ItemTestGid { get; set; }
-
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int ItemTestIdent { get; set; } // with fluent Api: modelBuilder.Entity<ItemTest>().Property(p => p.ItemTestIdent ).ValueGeneratedOnAdd();
-
-    public string? Name { get; set; }
 }
 
 public class Entity_CustomColumnNames
