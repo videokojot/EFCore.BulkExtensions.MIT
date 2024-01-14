@@ -21,6 +21,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     [Theory]
     [InlineData(DbServerType.SQLServer)]
     [InlineData(DbServerType.PostgreSQL)]
+    [InlineData(DbServerType.MySQL)]
     public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();

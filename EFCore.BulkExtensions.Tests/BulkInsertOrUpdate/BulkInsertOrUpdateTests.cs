@@ -235,6 +235,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
+    [InlineData(DbServerType.PostgreSQL)]
     public void IUD_KeepIdentity_IdentityDifferentFromKey(DbServerType dbType)
     {
         var item = new Entity_KeyDifferentFromIdentity()
