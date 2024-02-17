@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
     <ItemGroup>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.11"/>
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.2"/>
         <PackageReference Include="NetTopologySuite.IO.SqlServerBytes" Version="2.1.0"/>
@@ -14,5 +13,4 @@
         <PackageReference Include="MedallionTopologicalSort" Version="1.0.0"/>
         <PackageReference Include="StrongNamer" Version="0.2.5"/>
     </ItemGroup>
-
 </Project>

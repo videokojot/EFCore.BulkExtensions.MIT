@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     
     <ItemGroup>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0-preview3.23201.1"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0-rc.1.23419.6"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0-rc.1"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0"/>
     </ItemGroup>
 
 </Project>
