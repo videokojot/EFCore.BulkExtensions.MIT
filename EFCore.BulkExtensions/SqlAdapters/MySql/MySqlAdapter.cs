@@ -90,7 +90,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
     public async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType,
         Action<decimal>? progress, CancellationToken cancellationToken) where T : class
     {
-        await  MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, CancellationToken.None).ConfigureAwait(false);
+        await MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -327,8 +327,6 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <summary>
     /// Supports <see cref="MySqlConnector.MySqlBulkCopy"/>
     /// </summary>
-    /// <param name="mySqlBulkCopy"></param>
-    /// <param name="tableInfo"></param>
     private static void SetMySqlBulkCopyConfig(MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
     {
         mySqlBulkCopy.DestinationTableName = tableInfo.InsertToTempTable ? tableInfo.FullTempTableName : tableInfo.FullTableName;
@@ -345,7 +343,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         DataTable dataTable = InnerGetDataTable(context, ref type, entities, tableInfo);
 
         int sourceOrdinal = 0;
-        foreach (DataColumn item in dataTable.Columns)  //Add mapping
+        foreach (DataColumn item in dataTable.Columns)  // Add mapping
         {
             mySqlBulkCopy.ColumnMappings.Add(new MySqlBulkCopyColumnMapping(sourceOrdinal,item.ColumnName));
             sourceOrdinal++;

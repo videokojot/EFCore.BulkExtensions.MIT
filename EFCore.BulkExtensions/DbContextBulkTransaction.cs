@@ -15,9 +15,9 @@ internal static class DbContextBulkTransaction
 
         using (ActivitySources.StartExecuteActivity(operationType, entities.Count))
         {
-            if (entities.Count == 0 && 
-                operationType != OperationType.InsertOrUpdateOrDelete && 
-                operationType != OperationType.Truncate && 
+            if (entities.Count == 0 &&
+                operationType != OperationType.InsertOrUpdateOrDelete &&
+                operationType != OperationType.Truncate &&
                 operationType != OperationType.SaveChanges &&
                 (bulkConfig == null || bulkConfig.CustomSourceTableName == null))
             {
@@ -27,6 +27,7 @@ internal static class DbContextBulkTransaction
             if (operationType == OperationType.SaveChanges)
             {
                 DbContextBulkTransactionSaveChanges.SaveChanges(context, bulkConfig, progress);
+
                 return;
             }
             else if (bulkConfig?.IncludeGraph == true)
@@ -72,7 +73,7 @@ internal static class DbContextBulkTransaction
             {
                 await DbContextBulkTransactionSaveChanges.SaveChangesAsync(context, bulkConfig, progress, cancellationToken).ConfigureAwait(false);
             }
-            else if(bulkConfig?.IncludeGraph == true)
+            else if (bulkConfig?.IncludeGraph == true)
             {
                 await DbContextBulkTransactionGraphUtil.ExecuteWithGraphAsync(context, entities, operationType, bulkConfig, progress, cancellationToken).ConfigureAwait(false);
             }
