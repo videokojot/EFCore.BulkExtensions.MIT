@@ -1,5 +1,4 @@
 using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -24,12 +23,16 @@ namespace EFCore.BulkExtensions;
 /// </summary>
 public class TableInfo
 {
+    public string EscL { get; set; } = null!;
+    
+    public string EscR { get; set; } = null!;
+
     public string? Schema { get; set; }
-    public string SchemaFormated => Schema != null ? $"[{Schema}]." : "";
+    public string SchemaFormated => Schema != null ? $"{EscL}{Schema}{EscR}." : "";
     public string? TempSchema { get; set; }
-    public string TempSchemaFormated => TempSchema != null ? $"[{TempSchema}]." : "";
+    public string TempSchemaFormated => TempSchema != null ? $"{EscL}{TempSchema}{EscR}." : "";
     public string? TableName { get; set; }
-    public string FullTableName => $"{SchemaFormated}[{TableName}]";
+    public string FullTableName => $"{SchemaFormated}{EscL}{TableName}{EscR}";
     public Dictionary<string, string> PrimaryKeysPropertyColumnNameDict { get; set; } = null!;
     public Dictionary<string, string> EntityPKPropertyColumnNameDict { get; set; } = null!;
     public bool HasSinglePrimaryKey { get; set; }
@@ -38,8 +41,8 @@ public class TableInfo
     protected string TempDBPrefix => BulkConfig.UseTempDB ? "#" : "";
     public string? TempTableSufix { get; set; }
     public string? TempTableName { get; set; }
-    public string FullTempTableName => $"{TempSchemaFormated}[{TempDBPrefix}{TempTableName}]";
-    public string FullTempOutputTableName => $"{SchemaFormated}[{TempDBPrefix}{TempTableName}Output]";
+    public string FullTempTableName => $"{TempSchemaFormated}{EscL}{TempDBPrefix}{TempTableName}{EscR}";
+    public string FullTempOutputTableName => $"{SchemaFormated}{EscL}{TempDBPrefix}{TempTableName}Output{EscR}";
 
     public bool CreatedOutputTable => BulkConfig.SetOutputIdentity || BulkConfig.CalculateStats;
 
@@ -84,11 +87,10 @@ public class TableInfo
 
     public DbTransaction? DbTransaction { get; set; }
     
-    public string SqlActionIUD => "EF_BULK_EXTENSIONS_MIT_MERGE_ACTION_IUD";
+    public string SqlActionIUD => $"EF_BULK_EXTENSIONS_MIT_MERGE_ACTION_IUD";
 
-    public string OriginalIndexColumnName => "EF_BULK_EXTENSIONS_MIT_ORIGINAL_INDEX";
-
- 
+    public string OriginalIndexColumnName => $"EF_BULK_EXTENSIONS_MIT_ORIGINAL_INDEX";
+    
 #pragma warning restore CS1591 // No XML comments required here.
 
     /// <summary>
@@ -98,9 +100,12 @@ public class TableInfo
     {
         var tableInfo = new TableInfo
         {
+            EscL = context.GetAdapterDialect().EscL.ToString(),
+            EscR = context.GetAdapterDialect().EscR.ToString(), 
             NumberOfEntities = entities.Count,
             BulkConfig = bulkConfig ?? new BulkConfig(),
         };
+        
         tableInfo.BulkConfig.OperationType = operationType;
 
         bool isExplicitTransaction = context.Database.GetDbConnection().State == ConnectionState.Open;
@@ -287,7 +292,7 @@ public class TableInfo
                                               )?.GetColumnName(ObjectIdentifier);
         }
 
-        // timestamp/row version properties are only set by the Db, the property has a [Timestamp] Attribute or is configured in FluentAPI with .IsRowVersion()
+        // timestamp/row version properties are only set by the Db, the property has a Timestamp] Attribute or is configured in FluentAPI with .IsRowVersion()
         // They can be identified by the columne type "timestamp" or .IsConcurrencyToken in combination with .ValueGenerated == ValueGenerated.OnAddOrUpdate
         string timestampDbTypeName = nameof(TimestampAttribute).Replace("Attribute", "").ToLower(); // = "timestamp";
         IEnumerable<IProperty> timeStampProperties;
@@ -607,9 +612,9 @@ public class TableInfo
 
     public async Task<MergeActionCounts> GetMergeActionCounts(DbContext context, bool isAsync, CancellationToken cancellationToken)
     {
-        var commandText = $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'I';\n"
-                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'U' ;\n"
-                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE [{SqlActionIUD}] = 'D';";
+        var commandText = $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE {EscL}{SqlActionIUD}{EscR} = 'I';\n"
+                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE {EscL}{SqlActionIUD}{EscR} = 'U' ;\n"
+                          + $"SELECT COUNT (*) FROM {FullTempOutputTableName} WHERE {EscL}{SqlActionIUD}{EscR} = 'D';";
 
         var inserted = -1;
         var updated = -1;
@@ -1135,9 +1140,10 @@ public class TableInfo
     internal async Task<List<IndexToGeneratedId>> QueryOutputTableForIndexToIdMapping(DbContext context, bool isAsync, CancellationToken cancellationToken)
     {
         var shouldLoadAlsoTimestamp = false;
-        var identityColumn = HasIdentity ? $",[{IdentityColumnName}]" : string.Empty;
-        var timestampColumn = HasTimeStampColumn ? $", [{TimeStampColumnName}]" : string.Empty;
-        var sql = $"SELECT [{OriginalIndexColumnName}] {identityColumn} {timestampColumn} FROM {FullTempOutputTableName} WHERE [{OriginalIndexColumnName}] is not null;";
+        var idColumn = HasIdentity ? IdentityColumnName : PrimaryKeysPropertyColumnNameDict.Values.Single();
+        var identityColumn = $",{EscL}{idColumn}{EscR}";
+        var timestampColumn = HasTimeStampColumn ? $", {EscL}{TimeStampColumnName}{EscR}" : string.Empty;
+        var sql = $"SELECT {EscL}{OriginalIndexColumnName}{EscR} {identityColumn} {timestampColumn} FROM {FullTempOutputTableName} WHERE {EscL}{OriginalIndexColumnName}{EscR} is not null;";
         var results = new List<IndexToGeneratedId>();
 
         return isAsync ? await LoadResultsInternalAsync().ConfigureAwait(false) : LoadResultsInternal();
@@ -1259,14 +1265,14 @@ public class TableInfo
     public Expression<Func<DbContext, IEnumerable>> GetQueryExpression(Type entityType, string sqlQuery, bool ordered = true)
     {
         var parameter = Expression.Parameter(typeof(DbContext), "ctx");
-        var expression = Expression.Call(parameter, "Set", new Type[] { entityType });
-        expression = Expression.Call(typeof(RelationalQueryableExtensions), "FromSqlRaw", new Type[] { entityType }, expression, Expression.Constant(sqlQuery), Expression.Constant(Array.Empty<object>()));
+        var expression = Expression.Call(parameter, "Set", new [] { entityType });
+        expression = Expression.Call(typeof(RelationalQueryableExtensions), "FromSqlRaw", new [] { entityType }, expression, Expression.Constant(sqlQuery), Expression.Constant(Array.Empty<object>()));
         if (BulkConfig.TrackingEntities) // If Else can not be replaced with Ternary operator for Expression
         {
         }
         else
         {
-            expression = Expression.Call(typeof(EntityFrameworkQueryableExtensions), "AsNoTracking", new Type[] { entityType }, expression);
+            expression = Expression.Call(typeof(EntityFrameworkQueryableExtensions), "AsNoTracking", new [] { entityType }, expression);
         }
         expression = ordered ? OrderBy(entityType, expression, PrimaryKeysPropertyColumnNameDict.Select(a => a.Key).ToList()) : expression;
         return Expression.Lambda<Func<DbContext, IEnumerable>>(expression, parameter);

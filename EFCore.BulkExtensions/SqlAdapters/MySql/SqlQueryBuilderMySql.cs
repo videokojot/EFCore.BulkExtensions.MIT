@@ -10,11 +10,13 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to create table copy
     /// </summary>
-    public static string CreateTableCopy(string existingTableName, string newTableName, bool useTempDb)
+    public static string CreateTableCopy(TableInfo tableInfo, string existingTableName, string newTableName, bool useTempDb)
     {
+        string indexMappingColumn = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $", -1 AS {tableInfo.OriginalIndexColumnName} " : "";
+
         string keywordTemp = useTempDb ? "TEMPORARY " : "";
         var query = $"CREATE {keywordTemp}TABLE {newTableName} " +
-                    $"SELECT * FROM {existingTableName} " +
+                    $"SELECT * {indexMappingColumn} FROM {existingTableName} " +
                     "LIMIT 0;";
         query = query.Replace("[", "").Replace("]", "");
 
@@ -90,7 +92,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
             string updateAction;
 
-            if (string.IsNullOrEmpty(equalsColumns))
+            if (string.IsNullOrEmpty(equalsColumns) || operationType == OperationType.Insert)
             {
                 // This is 'do nothing' on update:
                 updateAction = $"ON DUPLICATE KEY UPDATE {firstPrimaryKey} = EXCLUDED.{firstPrimaryKey}";
@@ -100,23 +102,27 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
                 updateAction = $"ON DUPLICATE KEY UPDATE {equalsColumns}";
             }
 
+            var orderBy = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ORDER BY {tableInfo.OriginalIndexColumnName} " : "";
+
             query = $"INSERT INTO {tableInfo.FullTableName} ({commaSeparatedColumns}) " +
                     $"SELECT {commaSeparatedColumns} FROM {tableInfo.FullTempTableName} AS EXCLUDED " +
+                    orderBy +
                     updateAction +
                     " ;";
-            ;
+
 
             if (tableInfo.CreatedOutputTable)
             {
                 if (operationType == OperationType.Insert || operationType == OperationType.InsertOrUpdate)
                 {
+                    var rowNum = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ,row_number() OVER(PARTITION BY {firstPrimaryKey} ) " : "";
+
                     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
-                             $"SELECT * FROM {tableInfo.FullTableName} " +
+                             $"SELECT * {rowNum}  FROM {tableInfo.FullTableName} " +
                              $"WHERE {firstPrimaryKey} >= LAST_INSERT_ID() " +
                              $"AND {firstPrimaryKey} < LAST_INSERT_ID() + row_count(); ";
                 }
-
-                if (operationType == OperationType.Update)
+                else if (operationType == OperationType.Update)
                 {
                     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
                              $"SELECT * FROM {tableInfo.FullTempTableName} ";

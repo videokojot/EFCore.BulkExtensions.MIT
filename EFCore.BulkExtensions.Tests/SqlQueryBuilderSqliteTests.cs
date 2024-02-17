@@ -42,6 +42,8 @@ public class SqlQueryBuilderSqliteTests
     {
         var tableInfo = new TableInfo()
         {
+            EscL = "[",
+            EscR = "]",
             Schema = "dbo",
             TempSchema = "dbo",
             TableName = nameof(Item),

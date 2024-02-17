@@ -1,6 +1,8 @@
 ﻿namespace EFCore.BulkExtensions.SqlAdapters.PostgreSql;
 
-/// <inheritdoc/>
 public class PostgreSqlDialect : SqlDefaultDialect
 {
+    public override char EscL => '"';
+
+    public override char EscR => '"';
 }
