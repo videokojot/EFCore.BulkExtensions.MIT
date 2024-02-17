@@ -293,6 +293,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
 
         db.BulkInsertOrUpdate(ensureList, config =>
         {
+            config.SetOutputNonIdentityColumns = true;
             config.SetOutputIdentity = true;
             config.PreserveInsertOrder = false;
         });
