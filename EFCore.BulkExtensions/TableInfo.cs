@@ -84,9 +84,9 @@ public class TableInfo
 
     public DbTransaction? DbTransaction { get; set; }
     
-    public string SqlActionIUD => "EFCore_BulkExtensions_MIT_MergeActionIUD";
+    public string SqlActionIUD => "EF_BULK_EXTENSIONS_MIT_MERGE_ACTION_IUD";
 
-    public string OriginalIndexColumnName => "EFCore_BulkExtensions_MIT_OriginalIndex";
+    public string OriginalIndexColumnName => "EF_BULK_EXTENSIONS_MIT_ORIGINAL_INDEX";
 
  
 #pragma warning restore CS1591 // No XML comments required here.

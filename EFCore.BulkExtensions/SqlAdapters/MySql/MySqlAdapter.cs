@@ -338,17 +338,8 @@ public class MySqlAdapter : ISqlOperationsAdapter
     }
 
     #endregion
+    
     #region DataTable
-    /// <summary>
-    /// Supports <see cref="MySqlBulkCopy"/>
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="mySqlBulkCopy"></param>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public static DataTable GetDataTable<T>(DbContext context, Type type, IList<T> entities, MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
     {
         DataTable dataTable = InnerGetDataTable(context, ref type, entities, tableInfo);
@@ -365,12 +356,6 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <summary>
     /// Common logic for two versions of GetDataTable
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     private static DataTable InnerGetDataTable<T>(DbContext context, ref Type type, IList<T> entities, TableInfo tableInfo)
     {
         var dataTable = new DataTable();
