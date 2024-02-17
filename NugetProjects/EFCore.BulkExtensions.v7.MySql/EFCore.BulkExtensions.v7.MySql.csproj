@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.2"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
         <PackageReference Include="EntityFrameworkCore.SqlServer.HierarchyId" Version="3.0.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="7.0.11"/>
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0"/>
