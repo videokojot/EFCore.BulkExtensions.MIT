@@ -155,6 +155,7 @@ internal static class DbContextBulkTransactionSaveChanges
                     }
 
                     string methodName = EntityStateBulkMethodDict[entryGroup.EntityState].Key;
+
                     if (isAsync)
                     {
                         await InvokeBulkMethod(context, entryGroup.Entities, entityType, methodName, bulkConfig, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
@@ -168,6 +169,7 @@ internal static class DbContextBulkTransactionSaveChanges
             else if (option == 2)
             {
                 List<BulkMethodEntries> bulkMethodEntriesList = GetBulkMethodEntries(entries);
+
                 foreach (var bulkMethod in bulkMethodEntriesList)
                 {
                     if (isAsync)

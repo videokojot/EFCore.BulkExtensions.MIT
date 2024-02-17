@@ -204,7 +204,7 @@ CustomSourceDestinationMappingColumns: null,  DoNotUpdateIfTimeStampChanged: fal
 TrackingEntities: false,                      SRID: 4326,
 WithHoldlock: true,                           DateTime2PrecisionForceRound: false,
 CalculateStats: false,                        TemporalColumns: { "PeriodStart", "PeriodEnd" },
-SqlBulkCopyOptions: Default,                  OnSaveChangesSetFK: true,
+SqlBulkCopyOptions: Default,                  OnSaveChangesSetFK: true, // Not supported on MySQL
 SqlBulkCopyColumnOrderHints: null,            IgnoreGlobalQueryFilters: false,
 OnConflictUpdateWhereSql: null,               ReplaceReadEntities: false,
 ----------------------------------------------------------------------------------------------
@@ -245,7 +245,7 @@ When using **SetOutputIdentity** Id values will be updated to new ones from data
 With BulkInsertOrUpdate for those that will be updated it has to match with Id column, or other unique column(s) if using UpdateByProperties in which case  [orderBy is done with those props](https://github.com/borisdj/EFCore.BulkExtensions/issues/806) instead of ID.<br>
 For Sqlite combination of BulkInsertOrUpdate and IdentityId automatic set will not work properly since it does [not have full MERGE](https://github.com/borisdj/EFCore.BulkExtensions/issues/556) capabilities like SqlServer. Instead list can be split into 2 lists, and call separately BulkInsert and BulkUpdate.<br>
   
-**SetOutputIdentity** is useful when BulkInsert is done to multiple related tables, that have Identity column.<br>
+**SetOutputIdentity** (not supported for MySQL) is useful when BulkInsert is done to multiple related tables, that have Identity column.<br>
 After Insert is done to first table, we need Id-s (if using Option 1) that were generated in Db because they are FK(ForeignKey) in second table.<br>
 It is implemented with [OUTPUT](https://docs.microsoft.com/en-us/sql/t-sql/queries/output-clause-transact-sql) as part of MERGE Query, so in this case even the Insert is not done directly to TargetTable but to TempTable and then Merged with TargetTable.<br>
 When used Id-s will be updated in entitiesList, and if *PreserveInsertOrder* is set to *false* then entitiesList will be cleared and reloaded.<br>

@@ -106,7 +106,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         {
             tableInfo.InsertToTempTable = true;
 
-            var sqlCreateTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo.FullTableName, tableInfo.FullTempTableName, tableInfo.InsertToTempTable);
+            var sqlCreateTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo,tableInfo.FullTableName, tableInfo.FullTempTableName, tableInfo.InsertToTempTable);
             if (isAsync)
             {
                 await context.Database.ExecuteSqlRawAsync(sqlCreateTableCopy, cancellationToken).ConfigureAwait(false);
@@ -147,8 +147,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         if (tableInfo.CreatedOutputTable)
         {
             tableInfo.InsertToTempTable = true;
-            var sqlCreateOutputTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo.FullTableName,
-                tableInfo.FullTempOutputTableName, tableInfo.InsertToTempTable);
+            var sqlCreateOutputTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo,tableInfo.FullTableName, tableInfo.FullTempOutputTableName, tableInfo.InsertToTempTable);
             if (isAsync)
             {
                 await context.Database.ExecuteSqlRawAsync(sqlCreateOutputTableCopy, cancellationToken)
@@ -559,6 +558,14 @@ public class MySqlAdapter : ISqlOperationsAdapter
             columnsDict.Add(discriminatorColumn, entityType.GetDiscriminatorValue());
         }
         bool hasConverterProperties = tableInfo.ConvertiblePropertyColumnDict.Count > 0;
+        
+        if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+        {
+            dataTable.Columns.Add(tableInfo.OriginalIndexColumnName, typeof(int));
+            columnsDict.Add(tableInfo.OriginalIndexColumnName, -1);
+        }
+
+        var index = 0;
 
         foreach (T entity in entities)
         {
@@ -679,9 +686,16 @@ public class MySqlAdapter : ISqlOperationsAdapter
                     columnsDict[shadowPropertyName] = propertyValue;
                 }
             }
+            
+            if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+            {
+                columnsDict[tableInfo.OriginalIndexColumnName] = index;
+            }
 
             var record = columnsDict.Values.ToArray();
+
             dataTable.Rows.Add(record);
+            index++;
         }
 
         return dataTable;
