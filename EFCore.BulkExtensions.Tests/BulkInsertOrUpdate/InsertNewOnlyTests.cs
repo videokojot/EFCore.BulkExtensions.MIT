@@ -1,6 +1,5 @@
 using EFCore.BulkExtensions.SqlAdapters;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
@@ -21,6 +20,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     [Theory]
     [InlineData(DbServerType.SQLServer)]
     [InlineData(DbServerType.PostgreSQL)]
+    [InlineData(DbServerType.MySQL)]
     public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();
@@ -63,13 +63,10 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
             var ensureList = new[] { newItem, updatedItem };
 
             db.BulkInsertOrUpdate(ensureList,
-                                  c =>
-                                  {
-                                      c.PropertiesToIncludeOnUpdate = new() { "" };
-                                  });
+                                  c => { c.PropertiesToIncludeOnUpdate = new() { "" }; });
         }
-        
-        var allItems = GetItemsOfBulk(bulkId, dbType);
+
+        var allItems = _dbFixture.GetDb(dbType).GetItemsOfBulk(bulkId);
 
         Assert.Equal(2, allItems.Count);
 
@@ -82,17 +79,9 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         Assert.Equal(initialItem.Name, itemWhichWasNotUpdated.Name);
     }
 
-    private List<SimpleItem> GetItemsOfBulk(Guid bulkId, DbServerType sqlType)
-    {
-        using var db = _dbFixture.GetDb(sqlType);
 
-        return db.SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
-    }
-
-    public class DatabaseFixture : BulkDbTestsFixture
+    public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
-        public DatabaseFixture() : base(nameof(InsertNewOnlyTests))
-        {
-        }
+        protected override string DbName => nameof(InsertNewOnlyTests);
     }
 }

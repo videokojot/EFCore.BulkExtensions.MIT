@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
@@ -9,7 +11,6 @@ public class SimpleBulkTestsContext : DbContext
 {
     public DbSet<SimpleItem> SimpleItems { get; set; } = null!;
 
-    public DbSet<Entity_KeyDifferentFromIdentity> EntityKeyDifferentFromIdentities { get; set; } = null!;
 
     public DbSet<Entity_CustomColumnNames> EntityCustomColumnNames { get; set; } = null!;
 
@@ -20,6 +21,11 @@ public class SimpleBulkTestsContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+    }
+
+    public List<SimpleItem> GetItemsOfBulk(Guid bulkId)
+    {
+        return SimpleItems.Where(x => x.BulkIdentifier == bulkId).ToList();
     }
 }
 
@@ -34,16 +40,6 @@ public class SimpleItem
     public Guid GuidProperty { get; set; }
 
     public string? StringProperty { get; set; }
-}
-
-public class Entity_KeyDifferentFromIdentity
-{
-    [Key] public Guid ItemTestGid { get; set; }
-
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int ItemTestIdent { get; set; } // with fluent Api: modelBuilder.Entity<ItemTest>().Property(p => p.ItemTestIdent ).ValueGeneratedOnAdd();
-
-    public string? Name { get; set; }
 }
 
 public class Entity_CustomColumnNames
