@@ -7,12 +7,14 @@ using System.Linq.Expressions;
 
 namespace EFCore.BulkExtensions.SqlAdapters;
 
-/// <inheritdoc/>
-public class SqlDefaultDialect : IQueryBuilderSpecialization
+public abstract class SqlDefaultDialect : IQueryBuilderSpecialization
 {
     private static readonly int SelectStatementLength = "SELECT".Length;
 
-    /// <inheritdoc/>
+    public abstract char EscL { get; }
+
+    public abstract char EscR { get; }
+
     public virtual List<object> ReloadSqlParameters(DbContext context, List<object> sqlParameters)
     {
         var sqlParametersReloaded = new List<object>();
@@ -45,13 +47,12 @@ public class SqlDefaultDialect : IQueryBuilderSpecialization
         return sqlParametersReloaded;
     }
 
-    /// <inheritdoc/>
+
     public string GetBinaryExpressionAddOperation(BinaryExpression binaryExpression)
     {
         return "+";
     }
 
-    /// <inheritdoc/>
     public (string, string) GetBatchSqlReformatTableAliasAndTopStatement(string sqlQuery, DbServerType databaseType)
     {
         var isPostgreSql = databaseType == DbServerType.PostgreSQL;
@@ -64,7 +65,6 @@ public class SqlDefaultDialect : IQueryBuilderSpecialization
         return (tableAlias, topStatement);
     }
 
-    /// <inheritdoc/>
     public ExtractedTableAlias GetBatchSqlExtractTableAliasFromQuery(string fullQuery, string tableAlias, string tableAliasSuffixAs)
     {
         return new ExtractedTableAlias

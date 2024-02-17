@@ -9,10 +9,13 @@ using System.Text.RegularExpressions;
 
 namespace EFCore.BulkExtensions.SqlAdapters.SQLite;
 
-/// <inheritdoc/>
 public class SqliteDialect : IQueryBuilderSpecialization
 {
-    /// <inheritdoc/>
+    public  char EscL => '[';
+
+    public  char EscR => ']';
+    
+
     public List<object> ReloadSqlParameters(DbContext context, List<object> sqlParameters)
     {
         var sqlParametersReloaded = new List<object>();

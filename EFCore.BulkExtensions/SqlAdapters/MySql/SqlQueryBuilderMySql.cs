@@ -5,22 +5,18 @@ using Microsoft.Data.SqlClient;
 
 namespace EFCore.BulkExtensions.SqlAdapters.MySql;
 
-/// <summary>
-///  Contains a list of methods to generate SQL queries required by EFCore
-/// </summary>
 public class SqlQueryBuilderMySql : QueryBuilderExtensions
 {
     /// <summary>
     /// Generates SQL query to create table copy
     /// </summary>
-    /// <param name="existingTableName"></param>
-    /// <param name="newTableName"></param>
-    /// <param name="useTempDb"></param>
-    public static string CreateTableCopy(string existingTableName, string newTableName, bool useTempDb)
+    public static string CreateTableCopy(TableInfo tableInfo, string existingTableName, string newTableName, bool useTempDb)
     {
+        string indexMappingColumn = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $", -1 AS {tableInfo.OriginalIndexColumnName} " : "";
+
         string keywordTemp = useTempDb ? "TEMPORARY " : "";
         var query = $"CREATE {keywordTemp}TABLE {newTableName} " +
-                    $"SELECT * FROM {existingTableName} " +
+                    $"SELECT * {indexMappingColumn} FROM {existingTableName} " +
                     "LIMIT 0;";
         query = query.Replace("[", "").Replace("]", "");
 
@@ -30,9 +26,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to drop table
     /// </summary>
-    /// <param name="tableName"></param>
-    /// <param name="isTempTable"></param>
-    /// <returns></returns>
     public static string DropTable(string tableName, bool isTempTable)
     {
         string keywordTemp = isTempTable ? "TEMPORARY " : "";
@@ -45,8 +38,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Returns a list of columns for the given table
     /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <param name="operationType"></param>
     public static List<string> GetColumnList(TableInfo tableInfo, OperationType operationType)
     {
         var tempDict = tableInfo.PropertyColumnNamesDict;
@@ -57,7 +48,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         }
 
         List<string> columnsList = tableInfo.PropertyColumnNamesDict.Values.ToList();
-        List<string> propertiesList = tableInfo.PropertyColumnNamesDict.Keys.ToList();
 
         tableInfo.PropertyColumnNamesDict = tempDict;
 
@@ -66,9 +56,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
         if (!keepIdentity && tableInfo.HasIdentity && (operationType == OperationType.Insert || tableInfo.IdentityColumnName != uniquColumnName))
         {
-            var identityPropertyName = tableInfo.PropertyColumnNamesDict.SingleOrDefault(a => a.Value == tableInfo.IdentityColumnName).Key;
             columnsList = columnsList.Where(a => a != tableInfo.IdentityColumnName).ToList();
-            propertiesList = propertiesList.Where(a => a != identityPropertyName).ToList();
         }
 
         return columnsList;
@@ -104,7 +92,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
 
             string updateAction;
 
-            if (string.IsNullOrEmpty(equalsColumns))
+            if (string.IsNullOrEmpty(equalsColumns) || operationType == OperationType.Insert)
             {
                 // This is 'do nothing' on update:
                 updateAction = $"ON DUPLICATE KEY UPDATE {firstPrimaryKey} = EXCLUDED.{firstPrimaryKey}";
@@ -114,23 +102,27 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
                 updateAction = $"ON DUPLICATE KEY UPDATE {equalsColumns}";
             }
 
+            var orderBy = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ORDER BY {tableInfo.OriginalIndexColumnName} " : "";
+
             query = $"INSERT INTO {tableInfo.FullTableName} ({commaSeparatedColumns}) " +
                     $"SELECT {commaSeparatedColumns} FROM {tableInfo.FullTempTableName} AS EXCLUDED " +
+                    orderBy +
                     updateAction +
                     " ;";
-            ;
+
 
             if (tableInfo.CreatedOutputTable)
             {
                 if (operationType == OperationType.Insert || operationType == OperationType.InsertOrUpdate)
                 {
+                    var rowNum = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ,(row_number() OVER(ORDER BY {firstPrimaryKey} )) - 1 " : "";
+
                     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
-                             $"SELECT * FROM {tableInfo.FullTableName} " +
+                             $"SELECT * {rowNum}  FROM {tableInfo.FullTableName} " +
                              $"WHERE {firstPrimaryKey} >= LAST_INSERT_ID() " +
                              $"AND {firstPrimaryKey} < LAST_INSERT_ID() + row_count(); ";
                 }
-
-                if (operationType == OperationType.Update)
+                else if (operationType == OperationType.Update)
                 {
                     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
                              $"SELECT * FROM {tableInfo.FullTempTableName} ";
@@ -189,8 +181,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to select output from a table
     /// </summary>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public override string SelectFromOutputTable(TableInfo tableInfo)
     {
         List<string> columnsNames = tableInfo.OutputPropertyColumnNamesDict.Values.ToList();
@@ -204,7 +194,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to create a unique constraint
     /// </summary>
-    /// <param name="tableInfo"></param>
     public static string CreateUniqueConstrain(TableInfo tableInfo)
     {
         var tableName = tableInfo.TableName;
@@ -233,7 +222,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to drop a unique contstraint
     /// </summary>
-    /// <param name="tableInfo"></param>
     public static string DropUniqueConstrain(TableInfo tableInfo)
     {
         var tableName = tableInfo.TableName;
@@ -254,7 +242,6 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
     /// <summary>
     /// Generates SQL query to chaeck if a unique constrain exist
     /// </summary>
-    /// <param name="tableInfo"></param>
     public static string HasUniqueConstrain(TableInfo tableInfo)
     {
         var tableName = tableInfo.TableName;
@@ -270,36 +257,13 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
         return q;
     }
 
+    public override string RestructureForBatch(string sql, bool isDelete = false) => throw new NotImplementedException();
 
-    /// <summary>
-    /// Restructures a sql query for batch commands
-    /// </summary>
-    /// <param name="sql"></param>
-    /// <param name="isDelete"></param>
-    public override string RestructureForBatch(string sql, bool isDelete = false)
-    {
-        return sql;
-    }
 
-    /// <summary>
-    /// Returns a DbParameters intanced per provider
-    /// </summary>
-    /// <param name="sqlParameter"></param>
-    /// <returns></returns>
-    public override object CreateParameter(SqlParameter sqlParameter)
-    {
-        return sqlParameter;
-    }
+    public override object CreateParameter(SqlParameter sqlParameter) => throw new NotImplementedException();
 
-    /// <inheritdoc/>
-    public override object Dbtype()
-    {
-        throw new NotImplementedException();
-    }
+    public override object Dbtype() => throw new NotImplementedException();
 
-    /// <inheritdoc/>
-    public override void SetDbTypeParam(object npgsqlParameter, object dbType)
-    {
-        throw new NotImplementedException();
-    }
+
+    public override void SetDbTypeParam(object npgsqlParameter, object dbType) => throw new NotImplementedException();
 }

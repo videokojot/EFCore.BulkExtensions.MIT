@@ -7,7 +7,9 @@ using System.Linq.Expressions;
 
 namespace EFCore.BulkExtensions.SqlAdapters.SqlServer;
 
-/// <inheritdoc/>
 public class SqlServerDialect : SqlDefaultDialect
 {
+    public override char EscL => '[';
+
+    public override char EscR => ']';
 }

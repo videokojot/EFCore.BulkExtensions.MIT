@@ -1,9 +1,8 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+﻿namespace EFCore.BulkExtensions.SqlAdapters.MySql;
 
-namespace EFCore.BulkExtensions.SqlAdapters.MySql;
-
-/// <inheritdoc/>
 public class MySqlDialect : SqlDefaultDialect
 {
-    
+    public override char EscL => '`';
+
+    public override char EscR => '`';
 }

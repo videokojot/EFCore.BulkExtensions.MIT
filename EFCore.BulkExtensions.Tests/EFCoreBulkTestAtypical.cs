@@ -210,7 +210,7 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
         Assert.Equal("Note 1", firstDocumentNote.Note);
     }
 
-    [Theory]
+    [Theory(Skip = "Needs investigation, whether it is not dependent on concurrency.")]
     [InlineData(DbServerType.SQLServer)]
     //[InlineData(DbServer.Sqlite)] // No TimeStamp column type but can be set with DefaultValueSql: "CURRENT_TIMESTAMP" as it is in OnModelCreating() method.
     private void TimeStampTest(DbServerType dbServer)

@@ -90,7 +90,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
     public async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType,
         Action<decimal>? progress, CancellationToken cancellationToken) where T : class
     {
-        await  MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, CancellationToken.None).ConfigureAwait(false);
+        await MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -106,7 +106,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         {
             tableInfo.InsertToTempTable = true;
 
-            var sqlCreateTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo.FullTableName, tableInfo.FullTempTableName, tableInfo.InsertToTempTable);
+            var sqlCreateTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo,tableInfo.FullTableName, tableInfo.FullTempTableName, tableInfo.InsertToTempTable);
             if (isAsync)
             {
                 await context.Database.ExecuteSqlRawAsync(sqlCreateTableCopy, cancellationToken).ConfigureAwait(false);
@@ -147,8 +147,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         if (tableInfo.CreatedOutputTable)
         {
             tableInfo.InsertToTempTable = true;
-            var sqlCreateOutputTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo.FullTableName,
-                tableInfo.FullTempOutputTableName, tableInfo.InsertToTempTable);
+            var sqlCreateOutputTableCopy = SqlQueryBuilderMySql.CreateTableCopy(tableInfo,tableInfo.FullTableName, tableInfo.FullTempOutputTableName, tableInfo.InsertToTempTable);
             if (isAsync)
             {
                 await context.Database.ExecuteSqlRawAsync(sqlCreateOutputTableCopy, cancellationToken)
@@ -327,8 +326,6 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <summary>
     /// Supports <see cref="MySqlConnector.MySqlBulkCopy"/>
     /// </summary>
-    /// <param name="mySqlBulkCopy"></param>
-    /// <param name="tableInfo"></param>
     private static void SetMySqlBulkCopyConfig(MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
     {
         mySqlBulkCopy.DestinationTableName = tableInfo.InsertToTempTable ? tableInfo.FullTempTableName : tableInfo.FullTableName;
@@ -338,23 +335,14 @@ public class MySqlAdapter : ISqlOperationsAdapter
     }
 
     #endregion
+    
     #region DataTable
-    /// <summary>
-    /// Supports <see cref="MySqlBulkCopy"/>
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="mySqlBulkCopy"></param>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     public static DataTable GetDataTable<T>(DbContext context, Type type, IList<T> entities, MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
     {
         DataTable dataTable = InnerGetDataTable(context, ref type, entities, tableInfo);
 
         int sourceOrdinal = 0;
-        foreach (DataColumn item in dataTable.Columns)  //Add mapping
+        foreach (DataColumn item in dataTable.Columns)  // Add mapping
         {
             mySqlBulkCopy.ColumnMappings.Add(new MySqlBulkCopyColumnMapping(sourceOrdinal,item.ColumnName));
             sourceOrdinal++;
@@ -365,12 +353,6 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <summary>
     /// Common logic for two versions of GetDataTable
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="context"></param>
-    /// <param name="type"></param>
-    /// <param name="entities"></param>
-    /// <param name="tableInfo"></param>
-    /// <returns></returns>
     private static DataTable InnerGetDataTable<T>(DbContext context, ref Type type, IList<T> entities, TableInfo tableInfo)
     {
         var dataTable = new DataTable();
@@ -576,6 +558,14 @@ public class MySqlAdapter : ISqlOperationsAdapter
             columnsDict.Add(discriminatorColumn, entityType.GetDiscriminatorValue());
         }
         bool hasConverterProperties = tableInfo.ConvertiblePropertyColumnDict.Count > 0;
+        
+        if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+        {
+            dataTable.Columns.Add(tableInfo.OriginalIndexColumnName, typeof(int));
+            columnsDict.Add(tableInfo.OriginalIndexColumnName, -1);
+        }
+
+        var index = 0;
 
         foreach (T entity in entities)
         {
@@ -696,9 +686,16 @@ public class MySqlAdapter : ISqlOperationsAdapter
                     columnsDict[shadowPropertyName] = propertyValue;
                 }
             }
+            
+            if (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn)
+            {
+                columnsDict[tableInfo.OriginalIndexColumnName] = index;
+            }
 
             var record = columnsDict.Values.ToArray();
+
             dataTable.Rows.Add(record);
+            index++;
         }
 
         return dataTable;

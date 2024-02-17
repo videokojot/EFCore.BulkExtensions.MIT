@@ -13,6 +13,7 @@ namespace EFCore.BulkExtensions;
 internal static class DbContextBulkTransactionSaveChanges
 {
     #region SaveChanges
+
     public static void SaveChanges(DbContext context, BulkConfig? bulkConfig, Action<decimal>? progress)
     {
         SaveChangesAsync(context, bulkConfig, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
@@ -34,6 +35,9 @@ internal static class DbContextBulkTransactionSaveChanges
         {
             bulkConfig = new BulkConfig { };
         }
+
+        DbContextBulkTransaction.CheckForMySQLUnsupportedFeatures(context, OperationType.SaveChanges, bulkConfig);
+
         if (bulkConfig.OnSaveChangesSetFK && bulkConfig.SetOutputIdentity == false) // When FK is set by DB then SetOutput is required
         {
             bulkConfig.SetOutputIdentity = true;
@@ -44,6 +48,7 @@ internal static class DbContextBulkTransactionSaveChanges
                                                      (entry, group) => new { entry.EntityType, EntityState = entry.State, Entities = group.Select(a => a.Entity).ToList() });
         var entriesGroupedChanged = entriesGroupedByEntity.Where(a => EntityStateBulkMethodDict.ContainsKey(a.EntityState) & a.Entities.Count >= 0);
         var entriesGroupedChangedSorted = entriesGroupedChanged.OrderBy(a => a.EntityState.ToString() != EntityState.Modified.ToString()).ToList();
+
         if (entriesGroupedChangedSorted.Count == 0)
             return;
 
@@ -55,9 +60,11 @@ internal static class DbContextBulkTransactionSaveChanges
         {
             context.Database.OpenConnection();
         }
+
         var connection = context.GetUnderlyingConnection(bulkConfig);
 
         bool doExplicitCommit = false;
+
         if (context.Database.CurrentTransaction == null)
         {
             doExplicitCommit = true;
@@ -65,12 +72,12 @@ internal static class DbContextBulkTransactionSaveChanges
 
         try
         {
-
             var transaction = context.Database.CurrentTransaction ?? context.Database.BeginTransaction();
 
             if (option == 1)
             {
                 Dictionary<string, Dictionary<string, FastProperty>> fastPropertyDicts = new();
+
                 foreach (var entryGroup in entriesGroupedChangedSorted)
                 {
                     Type entityType = entryGroup.EntityType;
@@ -78,6 +85,7 @@ internal static class DbContextBulkTransactionSaveChanges
                     var entityModelType = context.Model.FindEntityType(entityType) ?? throw new ArgumentNullException($"Unable to determine EntityType from given type with name {entityType.Name}");
 
                     var entityPropertyDict = new Dictionary<string, FastProperty>();
+
                     if (!fastPropertyDicts.ContainsKey(entityType.Name))
                     {
                         var properties = entityModelType.GetProperties();
@@ -90,6 +98,7 @@ internal static class DbContextBulkTransactionSaveChanges
                                 entityPropertyDict.Add(property.Name, FastProperty.GetOrCreate(property.PropertyInfo));
                             }
                         }
+
                         foreach (var navigationPropertyInfo in navigationPropertiesInfo)
                         {
                             if (navigationPropertyInfo != null)
@@ -97,6 +106,7 @@ internal static class DbContextBulkTransactionSaveChanges
                                 entityPropertyDict.Add(navigationPropertyInfo.Name, FastProperty.GetOrCreate(navigationPropertyInfo));
                             }
                         }
+
                         fastPropertyDicts.Add(entityType.Name, entityPropertyDict);
                     }
                     else
@@ -107,6 +117,7 @@ internal static class DbContextBulkTransactionSaveChanges
                     if (bulkConfig.OnSaveChangesSetFK)
                     {
                         var navigations = entityModelType.GetNavigations().Where(x => !x.IsCollection && !x.TargetEntityType.IsOwned());
+
                         if (navigations.Any())
                         {
                             foreach (var navigation in navigations)
@@ -117,36 +128,37 @@ internal static class DbContextBulkTransactionSaveChanges
                                     var parentPropertyDict = fastPropertyDicts[navigation.ClrType.Name];
 
                                     var fkName = navigation.ForeignKey.Properties.Count > 0
-                                        ? navigation.ForeignKey.Properties[0].Name
-                                        : null;
+                                                     ? navigation.ForeignKey.Properties[0].Name
+                                                     : null;
 
                                     var pkName = navigation.ForeignKey.PrincipalKey.Properties.Count > 0
-                                        ? navigation.ForeignKey.PrincipalKey.Properties[0].Name
-                                        : null;
+                                                     ? navigation.ForeignKey.PrincipalKey.Properties[0].Name
+                                                     : null;
 
                                     if (pkName is not null && fkName is not null)
                                     {
                                         foreach (var entity in entryGroup.Entities)
                                         {
                                             var parentEntity = entityPropertyDict[navigation.Name].Get(entity);
+
                                             if (parentEntity is not null)
                                             {
                                                 var pkValue = parentPropertyDict[pkName].Get(parentEntity);
+
                                                 if (pkValue is not null)
                                                 {
                                                     entityPropertyDict[fkName].Set(entity, pkValue);
                                                 }
                                             }
-
                                         }
                                     }
-
                                 }
                             }
                         }
                     }
 
                     string methodName = EntityStateBulkMethodDict[entryGroup.EntityState].Key;
+
                     if (isAsync)
                     {
                         await InvokeBulkMethod(context, entryGroup.Entities, entityType, methodName, bulkConfig, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
@@ -160,6 +172,7 @@ internal static class DbContextBulkTransactionSaveChanges
             else if (option == 2)
             {
                 List<BulkMethodEntries> bulkMethodEntriesList = GetBulkMethodEntries(entries);
+
                 foreach (var bulkMethod in bulkMethodEntriesList)
                 {
                     if (isAsync)
@@ -172,6 +185,7 @@ internal static class DbContextBulkTransactionSaveChanges
                     }
                 }
             }
+
             if (doExplicitCommit)
             {
                 transaction.Commit();
@@ -182,7 +196,6 @@ internal static class DbContextBulkTransactionSaveChanges
         {
             if (doExplicitCommit)
             {
-
                 if (isAsync)
                 {
                     await context.Database.CloseConnectionAsync().ConfigureAwait(false);
@@ -199,25 +212,27 @@ internal static class DbContextBulkTransactionSaveChanges
     {
         methodName += isAsync ? "Async" : "";
         MethodInfo? bulkMethod = typeof(DbContextBulkExtensions)
-            .GetMethods()
-            .Where(a => a.Name == methodName)
-            .FirstOrDefault();
+                                 .GetMethods()
+                                 .Where(a => a.Name == methodName)
+                                 .FirstOrDefault();
 
         bulkMethod = bulkMethod?.MakeGenericMethod(typeof(object));
 
         var arguments = new List<object?> { context, entities, bulkConfig, progress, entityType, cancellationToken };
+
         if (isAsync)
         {
             var methodArguments = arguments.ToArray();
+
             if (bulkMethod is not null)
             {
                 var task = (Task?)bulkMethod.Invoke(null, methodArguments);
+
                 if (task != null)
                 {
                     await task.ConfigureAwait(false);
                 }
             }
-
         }
         else
         {
@@ -231,8 +246,9 @@ internal static class DbContextBulkTransactionSaveChanges
     {
         { EntityState.Deleted, new KeyValuePair<string, int>(nameof(DbContextBulkExtensions.BulkDelete), 1) },
         { EntityState.Modified, new KeyValuePair<string, int>(nameof(DbContextBulkExtensions.BulkUpdate), 2) },
-        { EntityState.Added, new KeyValuePair<string, int>(nameof(DbContextBulkExtensions.BulkInsert), 3)},
+        { EntityState.Added, new KeyValuePair<string, int>(nameof(DbContextBulkExtensions.BulkInsert), 3) },
     };
+
     #endregion
 
     private static List<BulkMethodEntries> GetBulkMethodEntries(IEnumerable<EntityEntry> entries)
@@ -259,12 +275,15 @@ internal static class DbContextBulkTransactionSaveChanges
             foreach (var n in navigations.Where(a => a.Metadata.IsCollection))
             {
                 Type navType = GetNonProxyType(n.Metadata.ClrType.GenericTypeArguments.Single());
+
                 if (!tree.TryGetValue(navType, out DbNode? childNode))
                 {
                     childNode = new DbNode() { Type = navType };
 
                     tree.TryAdd(navType, childNode);
-                };
+                }
+
+                ;
 
                 if (!childNode.Parents.Any(a => a.Type == node.Type))
                 {
@@ -280,11 +299,14 @@ internal static class DbContextBulkTransactionSaveChanges
             foreach (var n in navigations.Where(a => !a.Metadata.IsCollection))
             {
                 Type navType = GetNonProxyType(n.Metadata.ClrType);
+
                 if (!tree.TryGetValue(navType, out DbNode? parentNode))
                 {
                     parentNode = new DbNode() { Type = navType };
                     tree.TryAdd(navType, parentNode);
-                };
+                }
+
+                ;
 
                 if (!parentNode.Children.Any(a => a.Type == node.Type))
                 {
@@ -382,6 +404,7 @@ internal static class DbContextBulkTransactionSaveChanges
             if (EntityStateBulkMethodDict.TryGetValue(entry.State, out KeyValuePair<string, int> method))
             {
                 var methodEntry = MethodEntries.FirstOrDefault(a => a.Key == method.Key);
+
                 if (methodEntry.Key == null)
                 {
                     methodEntry = new KeyValuePair<string, List<object>>(method.Key, new List<object>());

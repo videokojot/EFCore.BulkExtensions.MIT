@@ -13,11 +13,13 @@ internal static class DbContextBulkTransaction
     {
         type ??= typeof(T);
 
+        CheckForMySQLUnsupportedFeatures(context, operationType, bulkConfig);
+
         using (ActivitySources.StartExecuteActivity(operationType, entities.Count))
         {
-            if (entities.Count == 0 && 
-                operationType != OperationType.InsertOrUpdateOrDelete && 
-                operationType != OperationType.Truncate && 
+            if (entities.Count == 0 &&
+                operationType != OperationType.InsertOrUpdateOrDelete &&
+                operationType != OperationType.Truncate &&
                 operationType != OperationType.SaveChanges &&
                 (bulkConfig == null || bulkConfig.CustomSourceTableName == null))
             {
@@ -27,6 +29,7 @@ internal static class DbContextBulkTransaction
             if (operationType == OperationType.SaveChanges)
             {
                 DbContextBulkTransactionSaveChanges.SaveChanges(context, bulkConfig, progress);
+
                 return;
             }
             else if (bulkConfig?.IncludeGraph == true)
@@ -57,6 +60,27 @@ internal static class DbContextBulkTransaction
         }
     }
 
+    internal static void CheckForMySQLUnsupportedFeatures(DbContext context, OperationType operationType, BulkConfig? bulkConfig)
+    {
+        // In future versions we want to throw here (uncomment code below):
+
+        // if (SqlAdaptersMapping.GetDatabaseType(context) == DbServerType.MySQL)
+        // {
+            // Output identity is not supported for the MySQL
+            // https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/
+
+            // if (bulkConfig != null && operationType == OperationType.SaveChanges)
+            // {
+            //     bulkConfig.OnSaveChangesSetFK = false;
+            // }
+            //
+            // if (bulkConfig?.SetOutputIdentity == true)
+            // {
+            //     throw new NotSupportedException("SetOutputIdentity is not supported for MySQL (see issue https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/90) ");
+            // }
+        // }
+    }
+
     public static async Task ExecuteAsync<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig, Action<decimal>? progress, CancellationToken cancellationToken = default) where T : class
     {
         type ??= typeof(T);
@@ -72,7 +96,7 @@ internal static class DbContextBulkTransaction
             {
                 await DbContextBulkTransactionSaveChanges.SaveChangesAsync(context, bulkConfig, progress, cancellationToken).ConfigureAwait(false);
             }
-            else if(bulkConfig?.IncludeGraph == true)
+            else if (bulkConfig?.IncludeGraph == true)
             {
                 await DbContextBulkTransactionGraphUtil.ExecuteWithGraphAsync(context, entities, operationType, bulkConfig, progress, cancellationToken).ConfigureAwait(false);
             }
