@@ -33,7 +33,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
         var newItem = new SimpleItem()
         {
             StringProperty = null,
-            GuidProperty = new Guid("ac53ed8d-5ee4-43cb-98c0-f12939949a49"),
+            GuidProperty = Guid.NewGuid(),
         };
 
         var ensureList = new[] { newItem, };
@@ -138,7 +138,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
         var newItem = new SimpleItem()
         {
             StringProperty = "newItem",
-            GuidProperty = new Guid("9f71ff93-2326-44d3-acb6-95b5d0566d68"),
+            GuidProperty = Guid.NewGuid(),
             Name = "newName",
         };
 
@@ -275,7 +275,7 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
         var newItem = new SimpleItem()
         {
             StringProperty = "newItem",
-            GuidProperty = new Guid("9f71ff93-2326-44d3-acb6-95b5d0566d68"),
+            GuidProperty = Guid.NewGuid(),
             Name = "newName",
         };
 
@@ -296,14 +296,12 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
 
         Assert.NotSame(ensureList[0], newItem); // Items were reloaded
 
-        Assert.True(newItem.Id == 0); // We did not touch original object
+        Assert.True(newItem.Id == 0);  // We did not touch original object
         Assert.True(newItem2.Id == 0); // We did not touch original object
-        
+
         Assert.True(ensureList[0].Id != 0);
         Assert.True(ensureList[1].Id != 0);
     }
-
-
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
     {
