@@ -28,6 +28,7 @@ public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDiffer
     /// </summary>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
+    // [InlineData(DbServerType.PostgreSQL)] // TODO Add this here!
     public void IUD_KeepIdentity_IdentityDifferentFromKey(DbServerType dbType)
     {
         var item = new Entity_KeyDifferentFromIdentity()
