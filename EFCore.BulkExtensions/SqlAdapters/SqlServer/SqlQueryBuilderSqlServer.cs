@@ -8,9 +8,6 @@ using System.Text.RegularExpressions;
 
 namespace EFCore.BulkExtensions.SqlAdapters.SqlServer;
 
-/// <summary>
-/// Contains a compilation of SQL queries used in EFCore.
-/// </summary>
 public class SqlQueryBuilderSqlServer : QueryBuilderExtensions
 {
     /// <inheritdoc/>
