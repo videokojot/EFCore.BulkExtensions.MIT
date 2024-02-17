@@ -94,7 +94,7 @@ public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdat
         {
         }
 
-        public DbSet<MySqlItem> Items { get; private set; }
+        public DbSet<MySqlItem> Items { get; private set; } = null!;
 
         public List<MySqlItem> GetItemsOfBulk(Guid bulkId)
         {
