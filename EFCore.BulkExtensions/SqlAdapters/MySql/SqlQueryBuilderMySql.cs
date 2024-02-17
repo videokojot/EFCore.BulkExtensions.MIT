@@ -115,7 +115,7 @@ public class SqlQueryBuilderMySql : QueryBuilderExtensions
             {
                 if (operationType == OperationType.Insert || operationType == OperationType.InsertOrUpdate)
                 {
-                    var rowNum = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ,row_number() OVER(PARTITION BY {firstPrimaryKey} ) " : "";
+                    var rowNum = (tableInfo.BulkConfig.UseOriginalIndexToIdentityMappingColumn) ? $" ,(row_number() OVER(ORDER BY {firstPrimaryKey} )) - 1 " : "";
 
                     query += $"INSERT INTO {tableInfo.FullTempOutputTableName} " +
                              $"SELECT * {rowNum}  FROM {tableInfo.FullTableName} " +

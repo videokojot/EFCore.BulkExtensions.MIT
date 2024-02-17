@@ -271,6 +271,9 @@ public class EFCoreBulkTest : IAssemblyFixture<DbAssemblyFixture>
 
         context.BulkInsert(entities1, bc => bc.SetOutputIdentity = true);
         Assert.Equal(1, entities1[0].ItemId);
+        
+        Assert.Equal(10, context.Items.Count());
+        
         Assert.Equal("info 1", context.Items.Where(a => a.Name == "Name 1").AsNoTracking().FirstOrDefault()?.Description);
         Assert.Equal("info 2", context.Items.Where(a => a.Name == "Name 2").AsNoTracking().FirstOrDefault()?.Description);
 

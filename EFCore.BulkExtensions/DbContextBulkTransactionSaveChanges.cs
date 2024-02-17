@@ -35,6 +35,9 @@ internal static class DbContextBulkTransactionSaveChanges
         {
             bulkConfig = new BulkConfig { };
         }
+
+        DbContextBulkTransaction.CheckForMySQLUnsupportedFeatures(context, OperationType.SaveChanges, bulkConfig);
+
         if (bulkConfig.OnSaveChangesSetFK && bulkConfig.SetOutputIdentity == false) // When FK is set by DB then SetOutput is required
         {
             bulkConfig.SetOutputIdentity = true;
