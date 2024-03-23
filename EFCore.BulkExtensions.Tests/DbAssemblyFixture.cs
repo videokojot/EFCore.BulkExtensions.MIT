@@ -99,9 +99,9 @@ public class DbAssemblyFixture : IDisposable
                 var builder = new NpgsqlConnectionStringBuilder(postgreSqlContainer.GetConnectionString());
                 builder.Database = databaseName;
 
-                return builder.ToString();
+                return builder + ";Include Error Detail=True";
             }
-            
+
             string EnhanceConnectionStringMySql(MySqlContainer mySqlContainer)
             {
                 var builder = new MySqlConnectionStringBuilder(mySqlContainer.GetConnectionString());
