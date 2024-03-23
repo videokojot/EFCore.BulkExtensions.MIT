@@ -39,14 +39,18 @@ public class SimpleItem
 
     public Guid GuidProperty { get; set; }
 
+    [MaxLength(500)]
     public string? StringProperty { get; set; }
 }
 
 public class Entity_CustomColumnNames
 {
-    [Column("Id")] public long Id { get; set; }
+    [Column("Id")]
+    public long Id { get; set; }
 
-    [Column("Custom_Column")] public string? CustomColumn { get; set; }
+    [Column("Custom_Column")]
+    public string? CustomColumn { get; set; }
 
-    [Column("Guid_Property")] public Guid GuidProperty { get; set; }
+    [Column("Guid_Property")]
+    public Guid GuidProperty { get; set; }
 }

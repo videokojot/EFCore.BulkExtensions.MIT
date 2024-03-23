@@ -20,7 +20,7 @@ public class SqlQueryBuilderPostgreSqlTests
                           @"ON CONFLICT (""ItemId"") DO UPDATE SET ""Name"" = EXCLUDED.""Name"";";
         Assert.Equal(expected, actual);
     }
-    
+
     [Fact]
     public void MergeTableInsertOrUpdateWithOnConflictUpdateWhereSqlTest()
     {
@@ -34,7 +34,7 @@ public class SqlQueryBuilderPostgreSqlTests
                           @"WHERE EXCLUDED.ItemTimestamp > ""dbo"".""Item"".ItemTimestamp;";
         Assert.Equal(expected, actual);
     }
-    
+
     [Fact]
     public void MergeTableInsertOrUpdateWithInsertOnlyTest()
     {
@@ -44,14 +44,12 @@ public class SqlQueryBuilderPostgreSqlTests
         string actual = SqlQueryBuilderPostgreSql.MergeTable<Item>(tableInfo, OperationType.InsertOrUpdate);
 
         string expected = @"INSERT INTO ""dbo"".""Item"" (""ItemId"", ""Name"") " +
-                          @"(SELECT ""ItemId"", ""Name"" FROM ""dbo"".""ItemTemp1234"") LIMIT 1 " +
+                          @"(SELECT ""ItemId"", ""Name"" FROM ""dbo"".""ItemTemp1234"") " +
                           @"ON CONFLICT (""ItemId"") DO NOTHING;";
 
-        if (!actual.Contains("LIMIT 1"))
-            expected = expected.Replace(" LIMIT 1", "");
         Assert.Equal(expected, actual);
     }
-    
+
     private TableInfo GetTestTableInfo(Func<string, string, string>? onConflictUpdateWhereSql = null)
     {
         var tableInfo = new TableInfo()
@@ -77,6 +75,7 @@ public class SqlQueryBuilderPostgreSqlTests
         tableInfo.PropertyColumnNamesCompareDict = tableInfo.PropertyColumnNamesDict;
         //update all columns (default)
         tableInfo.PropertyColumnNamesUpdateDict = tableInfo.PropertyColumnNamesDict;
+
         return tableInfo;
     }
 }
