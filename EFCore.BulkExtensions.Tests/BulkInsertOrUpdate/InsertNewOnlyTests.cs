@@ -44,6 +44,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         // Should be inserted
         var newItem = new SimpleItem()
         {
+            Id = initialItemId + 1,
             StringProperty = "insertedByBulk",
             BulkIdentifier = bulkId,
             GuidProperty = Guid.NewGuid(),
@@ -52,6 +53,7 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
         // Should be also inserted
         var newItem2 = new SimpleItem()
         {
+            Id = initialItemId + 2,
             StringProperty = "insertedByBulk2",
             BulkIdentifier = bulkId,
             GuidProperty = Guid.NewGuid(),
