@@ -164,4 +164,39 @@ public class BulkInsertTests : IClassFixture<BulkInsertTests.DatabaseFixture>, I
             Assert.True(itemsFromDb.OrderBy(x => x.GuidProperty).Select(x => x.GuidProperty).SequenceEqual(items.OrderBy(x => x.GuidProperty).Select(x => x.GuidProperty)));
         }
     }
+
+    [Theory]
+    [InlineData(DbServerType.SQLServer)]
+    [InlineData(DbServerType.SQLite)]
+    public void BulkInsert_CustomColumnNames(DbServerType dbType)
+    {
+        var item = new Entity_CustomColumnNames()
+        {
+            Id = 0,
+            CustomColumn = "Value1",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        var item2 = new Entity_CustomColumnNames()
+        {
+            Id = 0,
+            CustomColumn = "Value2",
+            GuidProperty = Guid.NewGuid(),
+        };
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var items = new[] { item, item2 };
+            db.BulkInsert(items, c =>
+            {
+                c.SetOutputIdentity = true;
+            });
+        }
+
+        using (var db = _dbFixture.GetDb(dbType))
+        {
+            var insertedItem = db.EntityCustomColumnNames.Single(x => x.GuidProperty == item.GuidProperty);
+            Assert.Equal("Value1", insertedItem.CustomColumn);
+        }
+    }
 }
