@@ -43,7 +43,7 @@ public class SqlQueryBuilderSqlite : SqlAdapters.QueryBuilderExtensions
         List<string> propertiesList = tableInfo.PropertyColumnNamesDict.Keys.ToList();
 
         bool keepIdentity = tableInfo.BulkConfig.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
-        if (operationType == OperationType.Insert && !keepIdentity && tableInfo.HasIdentity)
+        if (!tableInfo.InsertToTempTable && !keepIdentity && tableInfo.HasIdentity)
         {
             var identityPropertyName = tableInfo.PropertyColumnNamesDict.SingleOrDefault(a => a.Value == tableInfo.IdentityColumnName).Key;
             columnsList = columnsList.Where(a => a != tableInfo.IdentityColumnName).ToList();
