@@ -222,7 +222,7 @@ public class EFCoreBulkTestAsync : IAssemblyFixture<DbAssemblyFixture>
         }
         if (isBulk)
         {
-            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true, SqlBulkCopyOptions = SqlBulkCopyOptions.FireTriggers | SqlBulkCopyOptions.KeepIdentity};
+            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true, SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity};
             await context.BulkInsertOrUpdateAsync(entities, bulkConfig);
             if (dbServer == DbServerType.SQLServer)
             {
