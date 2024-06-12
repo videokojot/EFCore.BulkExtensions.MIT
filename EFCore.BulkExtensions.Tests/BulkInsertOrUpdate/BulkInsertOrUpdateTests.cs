@@ -1,9 +1,10 @@
 using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Xunit.Abstractions;
 
 
@@ -305,6 +306,43 @@ public class BulkInsertOrUpdateTests : IClassFixture<BulkInsertOrUpdateTests.Dat
 
         Assert.True(ensureList[0].Id != 0);
         Assert.True(ensureList[1].Id != 0);
+    }
+
+    /// <summary>
+    /// Covers: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/131
+    /// </summary>
+    [Theory]
+    [InlineData(DbServerType.SQLite)]
+    public async Task BulkInsertOrUpdate_InsertsOrUpdatesByPropertyIn(DbServerType dbType)
+    {
+        await using var db = _dbFixture.GetDb(dbType);
+
+        var bulkConfig = new BulkConfig
+        {
+            UpdateByProperties = new List<string> { nameof(UniqueItem.FirstName), nameof(UniqueItem.LastName) }
+        };
+
+        var mockFirstName = Guid.NewGuid().ToString();
+        var mockLastName = Guid.NewGuid().ToString();
+
+        const int testSetSize = 2;
+        var testSet = Enumerable.Range(0, testSetSize)
+            .Select(x => new UniqueItem()
+            {
+                FirstName = mockFirstName + x,
+                LastName = mockLastName + x
+            });
+        
+        // duplicate enumeration is intentional - I want to create set of duplicates
+        // to verify that the "insert or update" (aka merge) works correctly and
+        // allows for database generated identity columns while doing so
+        var duplicateSet = testSet.Concat(testSet).ToList();
+        
+        await db.BulkInsertOrUpdateAsync(duplicateSet, bulkConfig, null, null, CancellationToken.None);
+        
+        Assert.Equal(testSetSize, await db.UniqueItems.CountAsync());
+        // before fix, it attempted to insert identity column, so it would insert "0" in this case, as it is default(int)
+        Assert.True(await db.UniqueItems.AllAsync(x => x.Id > 0)); 
     }
 
     public class DatabaseFixture : BulkDbTestsFixture<SimpleBulkTestsContext>
