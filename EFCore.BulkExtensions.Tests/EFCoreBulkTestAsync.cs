@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
@@ -221,7 +222,7 @@ public class EFCoreBulkTestAsync : IAssemblyFixture<DbAssemblyFixture>
         }
         if (isBulk)
         {
-            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true };
+            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true, SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity};
             await context.BulkInsertOrUpdateAsync(entities, bulkConfig);
             if (dbServer == DbServerType.SQLServer)
             {
