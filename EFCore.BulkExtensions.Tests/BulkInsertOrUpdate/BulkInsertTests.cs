@@ -1,7 +1,9 @@
 using EFCore.BulkExtensions.SqlAdapters;
 using System;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
@@ -198,5 +200,32 @@ public class BulkInsertTests : IClassFixture<BulkInsertTests.DatabaseFixture>, I
             var insertedItem = db.EntityCustomColumnNames.Single(x => x.GuidProperty == item.GuidProperty);
             Assert.Equal("Value1", insertedItem.CustomColumn);
         }
+    }
+
+    [Theory]
+    [InlineData(DbServerType.PostgreSQL)]
+    public async Task BulkInsert_CloseConnection(DbServerType dbType)
+    {
+        await using var db = _dbFixture.GetDb(dbType);
+        var items = new[]
+        {
+            new SimpleItem
+            {
+                Id = 0,
+                GuidProperty = Guid.NewGuid()
+            },
+            new SimpleItem
+            {
+                Id = 0,
+                GuidProperty = Guid.NewGuid()
+            },
+        };
+
+        await db.BulkInsertAsync(items, new BulkConfig
+        {
+            SetOutputIdentity = true
+        });
+
+        Assert.True(db.Database.GetDbConnection().State == ConnectionState.Closed);
     }
 }
