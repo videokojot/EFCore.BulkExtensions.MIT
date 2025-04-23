@@ -51,7 +51,9 @@ public class DbAssemblyFixture : IDisposable
             switch (dbServerType)
             {
                 case DbServerType.SQLServer:
-                    container = _msSqlContainer ??= new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-CU13-ubuntu-22.04").Build();
+                    container = _msSqlContainer ??= new MsSqlBuilder()
+                                                    .WithImage("mcr.microsoft.com/mssql/server:2022-CU13-ubuntu-22.04")
+                                                    .Build();
 
                     break;
                 case DbServerType.PostgreSQL:
