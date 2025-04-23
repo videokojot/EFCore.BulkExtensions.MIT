@@ -81,7 +81,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: |
+            6.x
+            7.x
+            8.x
       - name: Run tests
         run: dotnet test --configuration Release
 
@@ -107,7 +110,10 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: |
+            6.x
+            7.x
+            8.x
           
       - name: Tag commit v6
         uses: EndBug/latest-tag@latest
