@@ -6,6 +6,7 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,13 +23,13 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
     {
         InsertAsync(context, entities, tableInfo, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
     }
-    
+
     /// <inheritdoc/>
     public async Task InsertAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, CancellationToken cancellationToken)
     {
         await InsertAsync(context, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
     }
-    
+
     /// <inheritdoc/>
     protected static async Task InsertAsync<T>(DbContext context, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
     {
@@ -71,7 +72,7 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
                 foreach (var propertyName in propertiesNames)
                 {
                     if (operationType == OperationType.Insert
-                        && tableInfo.DefaultValueProperties.Contains(propertyName) 
+                        && tableInfo.DefaultValueProperties.Contains(propertyName)
                         && !tableInfo.PrimaryKeysPropertyColumnNameDict.ContainsKey(propertyName))
                     {
                         continue;
@@ -179,7 +180,7 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
             {
                 fullPropertyName = new string(entry.Token);
             }
-            
+
             propertyValue = tableInfo.FastPropertyDict[fullPropertyName].Get(propertyValue);
         }
 
@@ -216,7 +217,7 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
             }
         }
 
-        bool hasUniqueConstrain = await CheckHasExplicitUniqueConstrainAsync(context, tableInfo, isAsync,  cancellationToken).ConfigureAwait(false);
+        (bool hasUniqueConstrain, bool connectionOpenedInternally) = await CheckHasExplicitUniqueConstrainAsync(context, tableInfo, isAsync, cancellationToken).ConfigureAwait(false);
         if (hasUniqueConstrain == false)
         {
             if (tableInfo.EntityPKPropertyColumnNameDict == tableInfo.PrimaryKeysPropertyColumnNameDict)
@@ -315,6 +316,19 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
             {
                 // ignore "current transaction is aborted" exception as it hides the real exception that caused it
             }
+            
+            if (connectionOpenedInternally)
+            {
+                var connection = (NpgsqlConnection)context.Database.GetDbConnection();
+                if (isAsync)
+                {
+                    await connection.CloseAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    connection.Close();
+                }
+            }
         }
     }
 
@@ -324,11 +338,11 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
 
     /// <inheritdoc/>
     public async Task ReadAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, CancellationToken cancellationToken) where T : class
-        =>  await ReadAsync(context, type, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
+        => await ReadAsync(context, type, entities, tableInfo, progress, isAsync: true, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     protected async Task ReadAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken) where T : class
-        =>  await MergeAsync(context, type, entities, tableInfo, OperationType.Read, progress, isAsync, cancellationToken).ConfigureAwait(false);
+        => await MergeAsync(context, type, entities, tableInfo, OperationType.Read, progress, isAsync, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     public void Truncate(DbContext context, TableInfo tableInfo)
@@ -378,18 +392,19 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
     }
     #endregion
 
-    internal static async Task<bool> CheckHasExplicitUniqueConstrainAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
+    internal static async Task<(bool, bool)> CheckHasExplicitUniqueConstrainAsync(DbContext context, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken)
     {
         string countUniqueConstrain = SqlQueryBuilderPostgreSql.CountUniqueConstrain(tableInfo);
 
+        (DbConnection connection, bool connectionOpenedInternally) = await OpenAndGetNpgsqlConnectionAsync(context, cancellationToken).ConfigureAwait(false);
+
         bool hasUniqueConstrain = false;
-        using (var command = context.Database.GetDbConnection().CreateCommand())
+        using (var command = connection.CreateCommand())
         {
             //command.CommandText = @"SELECT COUNT(*) FROM ""Item""";
             //var count = command.ExecuteScalar();
 
             command.CommandText = countUniqueConstrain;
-            context.Database.OpenConnection();
 
             if (isAsync)
             {
@@ -414,6 +429,6 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
                 }
             }
         }
-        return hasUniqueConstrain;
+        return (hasUniqueConstrain, connectionOpenedInternally);
     }
 }
