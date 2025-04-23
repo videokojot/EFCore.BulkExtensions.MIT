@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.0"/>
     </ItemGroup>
 </Project>
