@@ -53,6 +53,15 @@
                 <FileVersion>8.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
+        <When Condition="$(MSBuildProjectName.Contains('v9'))">
+            <PropertyGroup>
+                <Version>9.$(BaseVersion)</Version>
+                <TargetFramework>net9.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V9</DefineConstants>
+                <AssemblyVersion>9.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>9.$(BaseVersion).0</FileVersion>
+            </PropertyGroup>
+        </When>
         <Otherwise>
         </Otherwise>
     </Choose>
