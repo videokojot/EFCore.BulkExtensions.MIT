@@ -62,17 +62,17 @@
 
     <!--  Add Source Files  -->
     <ItemGroup>
-        <Compile Include="..\..\EFCore.BulkExtensions\**\*.cs"/>
-        <None Include="..\..\EFCore.BulkExtensions\**\*.cs"/>
+        <Compile Include="..\..\EFCore.BulkExtensions\**\*.cs" />
+        <None Include="..\..\EFCore.BulkExtensions\**\*.cs" />
     </ItemGroup>
 
     <!--    Exlude specific folders for single provider packages -->
     <Choose>
         <When Condition="$(MSBuildProjectName.Contains('MySql'))">
             <ItemGroup>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**" />
             </ItemGroup>
             <PropertyGroup>
                 <Title>$(Title).MySQL</Title>
@@ -81,9 +81,9 @@
         </When>
         <When Condition="$(MSBuildProjectName.Contains('PostgreSql'))">
             <ItemGroup>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**" />
             </ItemGroup>
             <PropertyGroup>
                 <Title>$(Title).PostgreSql</Title>
@@ -92,9 +92,9 @@
         </When>
         <When Condition="$(MSBuildProjectName.Contains('SQLite'))">
             <ItemGroup>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SqlServer\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**" />
             </ItemGroup>
             <PropertyGroup>
                 <Title>$(Title).SQLite</Title>
@@ -103,9 +103,9 @@
         </When>
         <When Condition="$(MSBuildProjectName.Contains('SqlServer'))">
             <ItemGroup>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**"/>
-                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**"/>
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\PostgreSql\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\SQLite\**" />
+                <Compile Remove="..\..\EFCore.BulkExtensions\SqlAdapters\MySql\**" />
             </ItemGroup>
             <PropertyGroup>
                 <Title>$(Title).SqlServer</Title>
@@ -127,16 +127,16 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\EFCoreBulk.png" PackagePath="" Pack="True"/>
+        <None Include="..\..\EFCoreBulk.png" PackagePath="" Pack="True" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\README.md" PackagePath="" Pack="True"/>
-        <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE"/>
+        <None Include="..\..\README.md" PackagePath="" Pack="True" />
+        <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE" />
     </ItemGroup>
 
 </Project>
