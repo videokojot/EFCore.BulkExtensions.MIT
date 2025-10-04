@@ -30,6 +30,10 @@ public class MySqlDbServer : IDbServer
 
     bool IDbServer.PropertyHasIdentity(IProperty property)
     {
+#if V6
+        return false;
+#endif
+
         return MySqlPropertyExtensions.GetValueGenerationStrategy(property) == MySqlValueGenerationStrategy.IdentityColumn;
     }
 }
