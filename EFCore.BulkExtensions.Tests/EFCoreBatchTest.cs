@@ -236,7 +236,7 @@ WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE 
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 
-#if V7 || V8
+#if (V7 || V8 || V9)
              expectedSql =
 @"UPDATE p SET  [p].[Value] = (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
