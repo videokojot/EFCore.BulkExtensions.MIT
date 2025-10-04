@@ -211,7 +211,7 @@ LEFT JOIN [ParentDetail] AS [p0] ON [p].[ParentId] = [p0].[ParentId]
 WHERE [p].[ParentId] < 5 AND ([p0].[Notes] IS NOT NULL) AND NOT ([p0].[Notes] LIKE N'')";       
 #endif
 
-#if V8
+#if (V8 || V9)
                  expectedSql =
 @"UPDATE p SET  [p].[Description] = (
     SELECT COALESCE([p1].[Notes], N'Fallback')
@@ -236,7 +236,7 @@ WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE 
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 
-#if V7 || V8
+#if (V7 || V8 || V9)
              expectedSql =
 @"UPDATE p SET  [p].[Value] = (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
@@ -276,6 +276,17 @@ FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
 
+#if V9
+                expectedSql =
+@"UPDATE p SET  [p].[Description] = (COALESCE(CONVERT(varchar(100), (
+    SELECT COALESCE(SUM([c].[Value]), 0.0)
+    FROM [Child] AS [c]
+    WHERE [p].[ParentId] = [c].[ParentId] AND [c].[IsEnabled] = CAST(1 AS bit) AND [c].[Value] = @__p_0)), '')) , [p].[Value] = @param_1 
+FROM [Parent] AS [p]
+WHERE [p].[ParentId] = 1";
+#endif
+        
+ Console.WriteLine(actualSqlExecuted);
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
     }
 

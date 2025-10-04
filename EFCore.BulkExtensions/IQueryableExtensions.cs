@@ -26,25 +26,36 @@ public static class IQueryableExtensions
     {
         string relationalQueryContextText = "_relationalQueryContext";
         string relationalCommandCacheText = "_relationalCommandCache";
+        string relationalCommandResolverText = "_relationalCommandResolver";
 
         string cannotGetText = "Cannot get";
 
         var enumerator = query.Provider.Execute<IEnumerable>(query.Expression).GetEnumerator();
+        
         var queryContext = enumerator.Private<RelationalQueryContext>(relationalQueryContextText) ?? throw new InvalidOperationException($"{cannotGetText} {relationalQueryContextText}");
         var parameterValues = queryContext.ParameterValues;
 
 #pragma warning disable EF1001 // Internal EF Core API usage.
         var relationalCommandCache = (RelationalCommandCache?)enumerator.Private(relationalCommandCacheText);
+        var relationalCommandResolver = enumerator.Private<Delegate>(relationalCommandResolverText);
 #pragma warning restore EF1001
 
-        IRelationalCommand command;
+        IRelationalCommand? command = null;
         if (relationalCommandCache != null)
         {
 #pragma warning disable EF1001 // Internal EF Core API usage.
             command = (IRelationalCommand)relationalCommandCache.GetRelationalCommandTemplate(parameterValues);
 #pragma warning restore EF1001
         }
-        else
+        
+        if (command == null && relationalCommandResolver != null)
+        {
+            #pragma warning disable EF1001 // Internal EF Core API usage.
+            command = (IRelationalCommand?)relationalCommandResolver.DynamicInvoke(parameterValues);
+            #pragma warning restore EF1001
+        }
+        
+        if (command == null)
         {
             string selectExpressionText = "_selectExpression";
             string querySqlGeneratorFactoryText = "_querySqlGeneratorFactory";

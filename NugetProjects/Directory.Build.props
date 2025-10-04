@@ -3,7 +3,7 @@
         <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
-        <BaseVersion>19.0</BaseVersion>
+        <BaseVersion>20.0</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
         <Authors>borisdj, Jindrich Cincibuch</Authors>
@@ -51,6 +51,15 @@
                 <DefineConstants>$(DefineConstants);V8</DefineConstants>
                 <AssemblyVersion>8.$(BaseVersion).0</AssemblyVersion>
                 <FileVersion>8.$(BaseVersion).0</FileVersion>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('v9'))">
+            <PropertyGroup>
+                <Version>9.$(BaseVersion)</Version>
+                <TargetFramework>net9.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V9</DefineConstants>
+                <AssemblyVersion>9.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>9.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
         <Otherwise>
@@ -123,7 +132,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>

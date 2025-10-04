@@ -258,21 +258,9 @@ public class TableInfo
 
         if (isSqlServer || isNpgsql || isMySql)
         {
-            var strategyName = SqlAdaptersMapping.DbServer(context).ValueGenerationStrategy;
-            if (!strategyName.Contains(":Value"))
-            {
-                strategyName = strategyName.Replace("Value", ":Value"); //example 'SqlServer:ValueGenerationStrategy'
-            }
-
             foreach (var property in allProperties)
             {
-                var annotation = property.FindAnnotation(strategyName);
-                bool hasIdentity = false;
-                if (annotation != null)
-                {
-                    hasIdentity = SqlAdaptersMapping.DbServer(context).PropertyHasIdentity(annotation);
-                }
-                if (hasIdentity)
+                if (SqlAdaptersMapping.DbServer(context).PropertyHasIdentity(property))
                 {
                     IdentityColumnName = property.GetColumnName(ObjectIdentifier);
                     break;

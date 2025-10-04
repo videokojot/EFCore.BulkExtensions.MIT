@@ -38,7 +38,8 @@ jobs:
             6.x
             7.x
             8.x
-      
+            9.x
+          
       # Create the NuGet package in the folder from the environment variable NuGetDirectory
       - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
       
@@ -49,31 +50,31 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           path: ${{ env.NuGetDirectory }}/*.nupkg
+  
+  validate_nuget:
+    runs-on: ubuntu-latest
+    needs: [ create_nuget ]
+    steps:
+      # Install the .NET SDK indicated in the global.json file
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
 
-#  validate_nuget:
-#    runs-on: ubuntu-latest
-#    needs: [ create_nuget ]
-#    steps:
-#      # Install the .NET SDK indicated in the global.json file
-#      - name: Setup .NET
-#        uses: actions/setup-dotnet@v4
-#
-#      # Download the NuGet package created in the previous job
-#      - uses: actions/download-artifact@v4
-#        with:
-#          name: nuget
-#          path: ${{ env.NuGetDirectory }}
-#
-#      - name: Install nuget validator
-#        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
-#
-#      # Validate metadata and content of the NuGet package
-#      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
-#      # If some rules are not applicable, you can disable them
-#      # using the --excluded-rules or --excluded-rule-ids option
-#      - name: Validate package
-#        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --github-token "${{ secrets.GITHUB_TOKEN }}" --excluded-rules Symbols 
+      # Download the NuGet package created in the previous job
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
 
+      - name: Install nuget validator
+        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
+
+      # Validate metadata and content of the NuGet package
+      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
+      # If some rules are not applicable, you can disable them
+      # using the --excluded-rules or --excluded-rule-ids option
+      - name: Validate package
+        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --github-token "${{ secrets.GITHUB_TOKEN }}" --excluded-rules Symbols
+  
   run_test:
     runs-on: ubuntu-latest
     steps:
@@ -85,9 +86,10 @@ jobs:
             6.x
             7.x
             8.x
+            9.x
       - name: Run tests
         run: dotnet test --configuration Release
-
+  
   publish_nugets:
     # Publish only when creating a GitHub Release
     # https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
@@ -99,13 +101,13 @@ jobs:
       # We need to checkout so we can then use the git tag
       - name: Checkout
         uses: actions/checkout@v4
-        
+      
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
-
+      
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
@@ -114,12 +116,13 @@ jobs:
             6.x
             7.x
             8.x
-          
+            9.x
+
       - name: Tag commit v6
         uses: EndBug/latest-tag@latest
         with:
           ref: "6.${{ github.event.release.tag_name }}"
-#          directory: 'path/to/repo/dir'
+      #          directory: 'path/to/repo/dir'
       - name: Tag commit v7
         uses: EndBug/latest-tag@latest
         with:
@@ -128,6 +131,10 @@ jobs:
         uses: EndBug/latest-tag@latest
         with:
           ref: "8.${{ github.event.release.tag_name }}"
+      - name: Tag commit v9
+        uses: EndBug/latest-tag@latest
+        with:
+          ref: "9.${{ github.event.release.tag_name }}"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.
