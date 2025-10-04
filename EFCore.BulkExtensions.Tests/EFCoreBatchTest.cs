@@ -285,6 +285,8 @@ WHERE [p].[ParentId] = 1";
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
+        
+ Console.WriteLine(actualSqlExecuted);
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
     }
 
