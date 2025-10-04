@@ -266,7 +266,7 @@ WHERE [p].[ParentId] = 1";
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 
-#if V7 || V8
+#if V7 || V8 || V9
                 expectedSql =
 @"UPDATE p SET  [p].[Description] = (CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
