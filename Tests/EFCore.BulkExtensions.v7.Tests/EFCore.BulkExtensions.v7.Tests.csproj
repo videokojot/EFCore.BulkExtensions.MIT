@@ -8,4 +8,8 @@
         <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v7\EFCore.BulkExtensions.v7.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11"/>
+    </ItemGroup>
+
 </Project>

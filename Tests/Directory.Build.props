@@ -17,6 +17,10 @@
         <DefineConstants>$(DefineConstants);V8</DefineConstants>
     </PropertyGroup>
 
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v9'))">
+        <DefineConstants>$(DefineConstants);V9</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="xunit.assemblyfixture" Version="2.2.0"/>
 
@@ -29,7 +33,6 @@
         <PackageReference Include="Testcontainers.MySql" Version="3.6.0"/>
 
         <PackageReference Include="RT.Comb" Version="4.0.3"/>
-        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.6"/>
 
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
