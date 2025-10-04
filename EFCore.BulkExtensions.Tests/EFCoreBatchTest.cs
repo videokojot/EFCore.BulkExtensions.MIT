@@ -266,7 +266,7 @@ WHERE [p].[ParentId] = 1";
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 
-#if V7 || V8 || V9
+#if V7 || V8
                 expectedSql =
 @"UPDATE p SET  [p].[Description] = (CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
@@ -276,6 +276,15 @@ FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
 
+#if V9
+                expectedSql =
+@"UPDATE p SET  [p].[Description] = (COALESCE(CONVERT(varchar(100), (
+    SELECT COALESCE(SUM([c].[Value]), 0.0)
+    FROM [Child] AS [c]
+    WHERE [p].[ParentId] = [c].[ParentId] AND [c].[IsEnabled] = CAST(1 AS bit) AND [c].[Value] = @__p_0)), '')) , [p].[Value] = @param_1 
+FROM [Parent] AS [p]
+WHERE [p].[ParentId] = 1";
+#endif
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
     }
 
