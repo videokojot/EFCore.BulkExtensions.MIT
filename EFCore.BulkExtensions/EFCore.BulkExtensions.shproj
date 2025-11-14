@@ -16,7 +16,6 @@
 <!--  <PropertyGroup>-->
 <!--&lt;!&ndash; Do not pack     &ndash;&gt;-->
 <!--    <IsPackable>false</IsPackable>-->
-<!--    <TargetFramework>net6.0</TargetFramework>-->
 <!--    <Title>videkojot.TestPackage</Title>-->
 <!--    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
 <!--    <Version>6.6.4</Version>-->
