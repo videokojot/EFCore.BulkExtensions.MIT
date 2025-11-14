@@ -31,23 +31,30 @@ public static class IQueryableExtensions
         string cannotGetText = "Cannot get";
 
         var enumerator = query.Provider.Execute<IEnumerable>(query.Expression).GetEnumerator();
-        
-        var queryContext = enumerator.Private<RelationalQueryContext>(relationalQueryContextText) ?? throw new InvalidOperationException($"{cannotGetText} {relationalQueryContextText}");
-        var parameterValues = queryContext.ParameterValues;
 
-#pragma warning disable EF1001 // Internal EF Core API usage.
+        var queryContext = enumerator.Private<RelationalQueryContext>(relationalQueryContextText) ?? throw new InvalidOperationException($"{cannotGetText} {relationalQueryContextText}");
+
+#if NET10_0_OR_GREATER
+        var parameterValues = queryContext.Parameters;
+#else
+        var parameterValues = queryContext.ParameterValues;
+#endif
+
+
+        #pragma warning disable EF1001 // Internal EF Core API usage.
         var relationalCommandCache = (RelationalCommandCache?)enumerator.Private(relationalCommandCacheText);
         var relationalCommandResolver = enumerator.Private<Delegate>(relationalCommandResolverText);
-#pragma warning restore EF1001
+        #pragma warning restore EF1001
 
         IRelationalCommand? command = null;
+
         if (relationalCommandCache != null)
         {
-#pragma warning disable EF1001 // Internal EF Core API usage.
+            #pragma warning disable EF1001 // Internal EF Core API usage.
             command = (IRelationalCommand)relationalCommandCache.GetRelationalCommandTemplate(parameterValues);
-#pragma warning restore EF1001
+            #pragma warning restore EF1001
         }
-        
+
         if (command == null && relationalCommandResolver != null)
         {
             #pragma warning disable EF1001 // Internal EF Core API usage.
@@ -63,17 +70,21 @@ public static class IQueryableExtensions
             IQuerySqlGeneratorFactory factory = enumerator.Private<IQuerySqlGeneratorFactory>(querySqlGeneratorFactoryText) ?? throw new InvalidOperationException($"{cannotGetText} {querySqlGeneratorFactoryText}");
             command = factory.Create().GetCommand(selectExpression);
         }
+
         string sql = command.CommandText;
 
         IList<SqlParameter> parameters;
+
         try
         {
             using var dbCommand = new SqlCommand(); // Use a DbCommand to convert parameter values using ValueConverters to the correct type.
+
             foreach (var param in command.Parameters)
             {
                 var values = parameterValues[param.InvariantName];
                 param.AddDbParameter(dbCommand, values);
             }
+
             parameters = new List<SqlParameter>(dbCommand.Parameters.OfType<SqlParameter>());
             dbCommand.Parameters.Clear();
         }
@@ -95,6 +106,7 @@ public static class IQueryableExtensions
                 throw;
             }
         }
+
         return (sql, parameters);
     }
 

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\NugetProjects\EFCore.BulkExtensions.v9\EFCore.BulkExtensions.v9.csproj"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2"/>
+    </ItemGroup>
+
+</Project>

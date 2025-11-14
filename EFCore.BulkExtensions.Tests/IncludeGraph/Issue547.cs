@@ -74,11 +74,8 @@ public class Issue547DbContext : DbContext
 
 public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
 {
-#if V6
-        [Theory]
-#else
+
     [Theory(Skip = "Throws: System.Data.SqlTypes.SqlNullValueException : Data is Null. This method or property cannot be called on Null values.")]
-    #endif
     [InlineData(DbServerType.SQLServer)]
     public async Task Test(DbServerType dbServer)
     {
