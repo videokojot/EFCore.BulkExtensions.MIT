@@ -12,34 +12,27 @@ updates:
       interval: "weekly"
     reviewers:
       - "videokojot"
-  # Maintain dependencies for .NET projects (EFCore.BulkExtensions.Tests)
   - package-ecosystem: "nuget"
-    directory: "/Tests" # Directory.Build.props
-    schedule:
-      interval: "weekly"
-    reviewers:
-      - "videokojot"
-  # Maintain dependencies for .NET projects (EFCore.BulkExtensions)
-  - package-ecosystem: "nuget"
-    directory: "/NugetProjects" # Directory.Build.props
-    schedule:
-      interval: "weekly"
-    reviewers:
-      - "videokojot"
-  - package-ecosystem: "nuget"
-    directory: "/NugetProjects/EFCore.BulkExtensions.v6"
-    schedule:
-      interval: "weekly"
-    reviewers:
-      - "videokojot"
-  - package-ecosystem: "nuget"
-    directory: "/NugetProjects/EFCore.BulkExtensions.v7"
-    schedule:
-      interval: "weekly"
-    reviewers:
-      - "videokojot"
-  - package-ecosystem: "nuget"
-    directory: "/NugetProjects/EFCore.BulkExtensions.v8"
+    directories: 
+      - "/NugetProjects" # Directory.Build.props
+      - "/NugetProjects/EFCore.BulkExtensions.v8"
+      - "/NugetProjects/EFCore.BulkExtensions.v8.Tests"
+      - "/NugetProjects/EFCore.BulkExtensions.v8.MySql"
+      - "/NugetProjects/EFCore.BulkExtensions.v8.PostgreSql"
+      - "/NugetProjects/EFCore.BulkExtensions.v8.SQLite"
+      - "/NugetProjects/EFCore.BulkExtensions.v8.SqlServer"
+      - "/NugetProjects/EFCore.BulkExtensions.v9"
+      - "/NugetProjects/EFCore.BulkExtensions.v9.Tests"
+      - "/NugetProjects/EFCore.BulkExtensions.v9.MySql"
+      - "/NugetProjects/EFCore.BulkExtensions.v9.PostgreSql"
+      - "/NugetProjects/EFCore.BulkExtensions.v9.SQLite"
+      - "/NugetProjects/EFCore.BulkExtensions.v9.SqlServer"
+      - "/NugetProjects/EFCore.BulkExtensions.v10"
+      - "/NugetProjects/EFCore.BulkExtensions.v10.Tests"
+      - "/NugetProjects/EFCore.BulkExtensions.v10.MySql"
+      - "/NugetProjects/EFCore.BulkExtensions.v10.PostgreSql"
+      - "/NugetProjects/EFCore.BulkExtensions.v10.SQLite"
+      - "/NugetProjects/EFCore.BulkExtensions.v10.SqlServer"
     schedule:
       interval: "weekly"
     reviewers:

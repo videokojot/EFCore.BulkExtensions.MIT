@@ -3,7 +3,7 @@
         <Title>EFCore.BulkExtensions.MIT</Title>
         <BasePackageId>EFCore.BulkExtensions.MIT</BasePackageId>
         <PackageId>$(BasePackageId)</PackageId>
-        <BaseVersion>20.0</BaseVersion>
+        <BaseVersion>21.0</BaseVersion>
         <!--        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
         <Nullable>enable</Nullable>
         <Authors>borisdj, Jindrich Cincibuch</Authors>
@@ -26,24 +26,6 @@
     </PropertyGroup>
     
     <Choose>
-        <When Condition="$(MSBuildProjectName.Contains('v6'))">
-            <PropertyGroup>
-                <Version>6.$(BaseVersion)</Version>
-                <TargetFramework>net6.0</TargetFramework>
-                <DefineConstants>$(DefineConstants);V6</DefineConstants>
-                <AssemblyVersion>6.$(BaseVersion).0</AssemblyVersion>
-                <FileVersion>6.$(BaseVersion).0</FileVersion>
-            </PropertyGroup>
-        </When>
-        <When Condition="$(MSBuildProjectName.Contains('v7'))">
-            <PropertyGroup>
-                <Version>7.$(BaseVersion)</Version>
-                <TargetFramework>net6.0</TargetFramework>
-                <DefineConstants>$(DefineConstants);V7</DefineConstants>
-                <AssemblyVersion>7.$(BaseVersion).0</AssemblyVersion>
-                <FileVersion>7.$(BaseVersion).0</FileVersion>
-            </PropertyGroup>
-        </When>
         <When Condition="$(MSBuildProjectName.Contains('v8'))">
             <PropertyGroup>
                 <Version>8.$(BaseVersion)</Version>
@@ -60,6 +42,15 @@
                 <DefineConstants>$(DefineConstants);V9</DefineConstants>
                 <AssemblyVersion>9.$(BaseVersion).0</AssemblyVersion>
                 <FileVersion>9.$(BaseVersion).0</FileVersion>
+            </PropertyGroup>
+        </When>
+        <When Condition="$(MSBuildProjectName.Contains('v10'))">
+            <PropertyGroup>
+                <Version>10.$(BaseVersion)</Version>
+                <TargetFramework>net10.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V10</DefineConstants>
+                <AssemblyVersion>10.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>10.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
         <Otherwise>

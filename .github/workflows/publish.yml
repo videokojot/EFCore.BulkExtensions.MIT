@@ -35,10 +35,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            6.x
-            7.x
             8.x
             9.x
+            10.x
           
       # Create the NuGet package in the folder from the environment variable NuGetDirectory
       - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
@@ -113,20 +112,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            6.x
-            7.x
             8.x
             9.x
-
-      - name: Tag commit v6
-        uses: EndBug/latest-tag@latest
-        with:
-          ref: "6.${{ github.event.release.tag_name }}"
-      #          directory: 'path/to/repo/dir'
-      - name: Tag commit v7
-        uses: EndBug/latest-tag@latest
-        with:
-          ref: "7.${{ github.event.release.tag_name }}"
+            10.x
       - name: Tag commit v8
         uses: EndBug/latest-tag@latest
         with:
@@ -135,6 +123,10 @@ jobs:
         uses: EndBug/latest-tag@latest
         with:
           ref: "9.${{ github.event.release.tag_name }}"
+      - name: Tag commit v10
+        uses: EndBug/latest-tag@latest
+        with:
+          ref: "10.${{ github.event.release.tag_name }}"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.

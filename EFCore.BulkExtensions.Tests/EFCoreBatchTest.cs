@@ -191,28 +191,8 @@ public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
             .BatchUpdate(parent => new Parent { Description = parent.Details.Notes ?? "Fallback" });
 
         var actualSqlExecuted = testDbCommandInterceptor.ExecutedNonQueryCommands?.LastOrDefault()?.Sql;
-        var expectedSql =
-@"UPDATE p SET  [p].[Description] = (
-    SELECT COALESCE([p1].[Notes], N'Fallback')
-    FROM [ParentDetail] AS [p1]
-    WHERE [p1].[ParentId] = [p].[ParentId]) 
-FROM [Parent] AS [p]
-LEFT JOIN [ParentDetail] AS [p0] ON [p].[ParentId] = [p0].[ParentId]
-WHERE ([p].[ParentId] < 5) AND (([p0].[Notes] IS NOT NULL) AND NOT ([p0].[Notes] LIKE N''))";
-
-#if V7
-         expectedSql =
-@"UPDATE p SET  [p].[Description] = (
-    SELECT COALESCE([p1].[Notes], N'Fallback')
-    FROM [ParentDetail] AS [p1]
-    WHERE [p1].[ParentId] = [p].[ParentId]) 
-FROM [Parent] AS [p]
-LEFT JOIN [ParentDetail] AS [p0] ON [p].[ParentId] = [p0].[ParentId]
-WHERE [p].[ParentId] < 5 AND ([p0].[Notes] IS NOT NULL) AND NOT ([p0].[Notes] LIKE N'')";       
-#endif
-
-#if (V8 || V9)
-                 expectedSql =
+            
+var   expectedSql =
 @"UPDATE p SET  [p].[Description] = (
     SELECT COALESCE([p1].[Notes], N'Fallback')
     FROM [ParentDetail] AS [p1]
@@ -220,7 +200,6 @@ WHERE [p].[ParentId] < 5 AND ([p0].[Notes] IS NOT NULL) AND NOT ([p0].[Notes] LI
 FROM [Parent] AS [p]
 LEFT JOIN [ParentDetail] AS [p0] ON [p].[ParentId] = [p0].[ParentId]
 WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE N''";
-#endif
 
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
 
@@ -232,19 +211,9 @@ WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE 
 @"UPDATE p SET  [p].[Value] = (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
     FROM [Child] AS [c]
-    WHERE ([p].[ParentId] = [c].[ParentId]) AND ([c].[IsEnabled] = CAST(1 AS bit))) 
-FROM [Parent] AS [p]
-WHERE [p].[ParentId] = 1";
-
-#if (V7 || V8 || V9)
-             expectedSql =
-@"UPDATE p SET  [p].[Value] = (
-    SELECT COALESCE(SUM([c].[Value]), 0.0)
-    FROM [Child] AS [c]
     WHERE [p].[ParentId] = [c].[ParentId] AND [c].[IsEnabled] = CAST(1 AS bit)) 
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";   
-#endif
 
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
 
@@ -258,15 +227,9 @@ WHERE [p].[ParentId] = 1";
             });
 
         actualSqlExecuted = testDbCommandInterceptor.ExecutedNonQueryCommands?.LastOrDefault()?.Sql;
-        expectedSql =
-@"UPDATE p SET  [p].[Description] = (CONVERT(varchar(100), (
-    SELECT COALESCE(SUM([c].[Value]), 0.0)
-    FROM [Child] AS [c]
-    WHERE ([p].[ParentId] = [c].[ParentId]) AND (([c].[IsEnabled] = CAST(1 AS bit)) AND ([c].[Value] = @__p_0))))) , [p].[Value] = @param_1 
-FROM [Parent] AS [p]
-WHERE [p].[ParentId] = 1";
+        expectedSql = "unknown dotnet version";
 
-#if V7 || V8
+#if V8
                 expectedSql =
 @"UPDATE p SET  [p].[Description] = (CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
@@ -276,7 +239,7 @@ FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
 
-#if V9
+#if V9 || V10
                 expectedSql =
 @"UPDATE p SET  [p].[Description] = (COALESCE(CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
