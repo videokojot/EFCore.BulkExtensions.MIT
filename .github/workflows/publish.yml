@@ -32,7 +32,7 @@ jobs:
       
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.x
@@ -56,7 +56,7 @@ jobs:
     steps:
       # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
 
       # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v5
@@ -79,13 +79,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            6.x
-            7.x
             8.x
             9.x
+            10.x
       - name: Run tests
         run: dotnet test --configuration Release
   
