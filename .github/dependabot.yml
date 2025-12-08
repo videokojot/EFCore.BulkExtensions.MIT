@@ -26,6 +26,13 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    groups:
+      efcore-v8-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # EF Core v9 projects
   - package-ecosystem: "nuget"
@@ -40,6 +47,13 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    groups:
+      efcore-v9-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # EF Core v10 projects
   - package-ecosystem: "nuget"
@@ -54,6 +68,13 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    groups:
+      efcore-v10-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # Directory.Build.props
   - package-ecosystem: "nuget"
