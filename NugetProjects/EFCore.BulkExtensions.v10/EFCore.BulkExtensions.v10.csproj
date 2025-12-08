@@ -5,9 +5,9 @@
         <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.0" />
         <PackageReference Include="NetTopologySuite.IO.SqlServerBytes" Version="2.1.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="10.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.HierarchyId" Version="9.0.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.HierarchyId" Version="10.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="10.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="10.0.0" />
         <PackageReference Include="NetTopologySuite.IO.SpatiaLite" Version="2.0.0" />
         <PackageReference Include="MedallionTopologicalSort" Version="1.0.0" />
