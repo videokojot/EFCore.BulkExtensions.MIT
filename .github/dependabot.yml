@@ -9,24 +9,41 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     reviewers:
       - "videokojot"
+
+  # EF Core v8 projects
   - package-ecosystem: "nuget"
-    directories: 
-      - "/NugetProjects" # Directory.Build.props
+    directories:
       - "/NugetProjects/EFCore.BulkExtensions.v8"
       - "/NugetProjects/EFCore.BulkExtensions.v8.Tests"
       - "/NugetProjects/EFCore.BulkExtensions.v8.MySql"
       - "/NugetProjects/EFCore.BulkExtensions.v8.PostgreSql"
       - "/NugetProjects/EFCore.BulkExtensions.v8.SQLite"
       - "/NugetProjects/EFCore.BulkExtensions.v8.SqlServer"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "videokojot"
+
+  # EF Core v9 projects
+  - package-ecosystem: "nuget"
+    directories:
       - "/NugetProjects/EFCore.BulkExtensions.v9"
       - "/NugetProjects/EFCore.BulkExtensions.v9.Tests"
       - "/NugetProjects/EFCore.BulkExtensions.v9.MySql"
       - "/NugetProjects/EFCore.BulkExtensions.v9.PostgreSql"
       - "/NugetProjects/EFCore.BulkExtensions.v9.SQLite"
       - "/NugetProjects/EFCore.BulkExtensions.v9.SqlServer"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "videokojot"
+
+  # EF Core v10 projects
+  - package-ecosystem: "nuget"
+    directories:
       - "/NugetProjects/EFCore.BulkExtensions.v10"
       - "/NugetProjects/EFCore.BulkExtensions.v10.Tests"
       - "/NugetProjects/EFCore.BulkExtensions.v10.MySql"
@@ -34,6 +51,14 @@ updates:
       - "/NugetProjects/EFCore.BulkExtensions.v10.SQLite"
       - "/NugetProjects/EFCore.BulkExtensions.v10.SqlServer"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    reviewers:
+      - "videokojot"
+
+  # Directory.Build.props
+  - package-ecosystem: "nuget"
+    directory: "/NugetProjects"
+    schedule:
+      interval: "daily"
     reviewers:
       - "videokojot"
