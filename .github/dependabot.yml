@@ -15,13 +15,7 @@ updates:
 
   # EF Core v8 projects
   - package-ecosystem: "nuget"
-    directories:
-      - "/NugetProjects/EFCore.BulkExtensions.v8"
-      - "/NugetProjects/EFCore.BulkExtensions.v8.Tests"
-      - "/NugetProjects/EFCore.BulkExtensions.v8.MySql"
-      - "/NugetProjects/EFCore.BulkExtensions.v8.PostgreSql"
-      - "/NugetProjects/EFCore.BulkExtensions.v8.SQLite"
-      - "/NugetProjects/EFCore.BulkExtensions.v8.SqlServer"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v8*"
     schedule:
       interval: "daily"
     reviewers:
@@ -39,13 +33,7 @@ updates:
 
   # EF Core v9 projects
   - package-ecosystem: "nuget"
-    directories:
-      - "/NugetProjects/EFCore.BulkExtensions.v9"
-      - "/NugetProjects/EFCore.BulkExtensions.v9.Tests"
-      - "/NugetProjects/EFCore.BulkExtensions.v9.MySql"
-      - "/NugetProjects/EFCore.BulkExtensions.v9.PostgreSql"
-      - "/NugetProjects/EFCore.BulkExtensions.v9.SQLite"
-      - "/NugetProjects/EFCore.BulkExtensions.v9.SqlServer"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v9*"
     schedule:
       interval: "daily"
     reviewers:
@@ -63,13 +51,7 @@ updates:
 
   # EF Core v10 projects
   - package-ecosystem: "nuget"
-    directories:
-      - "/NugetProjects/EFCore.BulkExtensions.v10"
-      - "/NugetProjects/EFCore.BulkExtensions.v10.Tests"
-      - "/NugetProjects/EFCore.BulkExtensions.v10.MySql"
-      - "/NugetProjects/EFCore.BulkExtensions.v10.PostgreSql"
-      - "/NugetProjects/EFCore.BulkExtensions.v10.SQLite"
-      - "/NugetProjects/EFCore.BulkExtensions.v10.SqlServer"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v10*"
     schedule:
       interval: "daily"
     reviewers:
