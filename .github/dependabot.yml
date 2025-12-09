@@ -26,6 +26,9 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       efcore-v8-dependencies:
         patterns:
@@ -47,6 +50,9 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       efcore-v9-dependencies:
         patterns:
@@ -68,6 +74,9 @@ updates:
       interval: "daily"
     reviewers:
       - "videokojot"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       efcore-v10-dependencies:
         patterns:
