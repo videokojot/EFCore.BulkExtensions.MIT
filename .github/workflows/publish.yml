@@ -59,7 +59,7 @@ jobs:
         uses: actions/setup-dotnet@v5
 
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
@@ -101,7 +101,7 @@ jobs:
         uses: actions/checkout@v6
       
       # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
