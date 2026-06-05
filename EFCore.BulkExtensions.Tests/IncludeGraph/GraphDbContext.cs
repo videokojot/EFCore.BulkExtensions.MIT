@@ -1,4 +1,4 @@
-﻿using EFCore.BulkExtensions.Tests.IncludeGraph.Model;
+using EFCore.BulkExtensions.Tests.IncludeGraph.Model;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics.CodeAnalysis;
 
@@ -8,7 +8,7 @@ public class GraphDbContext : DbContext
 {
     public GraphDbContext([NotNull] DbContextOptions options) : base(options)
     {
-        this.Database.EnsureCreated();
+        Database.EnsureCreated();
     }
 
     public DbSet<WorkOrder> WorkOrders { get; set; } = null!;

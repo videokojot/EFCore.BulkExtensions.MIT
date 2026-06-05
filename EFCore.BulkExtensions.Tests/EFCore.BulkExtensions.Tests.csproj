@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\EFCore.BulkExtensions.props" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CA2007;EF1002;CS0105</NoWarn>
+    <!-- xUnit v3 test projects are stand-alone executables -->
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <DefineConstants>$(DefineConstants);V8</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <DefineConstants>$(DefineConstants);V10</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Providers\EFCore.BulkExtensions.SqlServer\EFCore.BulkExtensions.SqlServer.csproj" />
+    <ProjectReference Include="..\Providers\EFCore.BulkExtensions.PostgreSql\EFCore.BulkExtensions.PostgreSql.csproj" />
+    <ProjectReference Include="..\Providers\EFCore.BulkExtensions.MySql\EFCore.BulkExtensions.MySql.csproj" />
+    <ProjectReference Include="..\Providers\EFCore.BulkExtensions.SQLite\EFCore.BulkExtensions.SQLite.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testsettings.docker.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Import Project="..\targets\coverlet.collector.targets" />
+  <Import Project="..\targets\Microsoft.Extensions.Configuration.Json.targets" />
+  <Import Project="..\targets\Microsoft.NET.Test.Sdk.targets" />
+  <Import Project="..\targets\RT.Comb.targets" />
+  <Import Project="..\targets\SQLitePCLRaw.bundle_e_sqlite3.targets" />
+  <Import Project="..\targets\Testcontainers.targets" />
+  <Import Project="..\targets\Testcontainers.MsSql.targets" />
+  <Import Project="..\targets\Testcontainers.PostgreSql.targets" />
+  <Import Project="..\targets\Testcontainers.MySql.targets" />
+  <Import Project="..\targets\xunit.v3.targets" />
+  <Import Project="..\targets\xunit.runner.visualstudio.targets" />
+
+</Project>

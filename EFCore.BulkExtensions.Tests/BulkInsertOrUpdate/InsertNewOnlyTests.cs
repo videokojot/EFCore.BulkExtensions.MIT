@@ -2,11 +2,10 @@ using EFCore.BulkExtensions.SqlAdapters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixture>
 {
     private readonly DatabaseFixture _dbFixture;
 

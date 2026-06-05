@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EFCore.BulkExtensions.SqlAdapters.SQLite;
-using Microsoft.Data.SqlClient;
 
 namespace EFCore.BulkExtensions.Tests;
 
@@ -11,7 +10,7 @@ public class SqlQueryBuilderSqliteTests
     [Fact]
     public void MergeTableInsertOrUpdateWithoutOnConflictWithIdentityUpdateWhereSqlTest()
     {
-        TableInfo tableInfo = GetTestTableInfo(bulkCopyOptions: SqlBulkCopyOptions.KeepIdentity);
+        TableInfo tableInfo = GetTestTableInfo(bulkCopyOptions: BulkCopyOptions.KeepIdentity);
         tableInfo.IdentityColumnName = "ItemId";
         string actual = SqlQueryBuilderSqlite.InsertIntoTable(tableInfo, OperationType.InsertOrUpdate);
 
@@ -41,7 +40,7 @@ public class SqlQueryBuilderSqliteTests
     [Fact]
     public void MergeTableInsertOrUpdateWithOnConflictUpdateWhereSqlTest()
     {
-        TableInfo tableInfo = GetTestTableInfo((existing, inserted) => $"{inserted}.ItemTimestamp > {existing}.ItemTimestamp", SqlBulkCopyOptions.KeepIdentity);
+        TableInfo tableInfo = GetTestTableInfo((existing, inserted) => $"{inserted}.ItemTimestamp > {existing}.ItemTimestamp", BulkCopyOptions.KeepIdentity);
         tableInfo.IdentityColumnName = "ItemId";
         string actual = SqlQueryBuilderSqlite.InsertIntoTable(tableInfo, OperationType.InsertOrUpdate);
 
@@ -55,7 +54,7 @@ public class SqlQueryBuilderSqliteTests
     
     private TableInfo GetTestTableInfo(
         Func<string, string, string>? onConflictUpdateWhereSql = null
-        , SqlBulkCopyOptions? bulkCopyOptions = null)
+        , BulkCopyOptions? bulkCopyOptions = null)
     {
         var tableInfo = new TableInfo()
         {
@@ -70,7 +69,7 @@ public class SqlQueryBuilderSqliteTests
             BulkConfig = new BulkConfig()
             {
                 OnConflictUpdateWhereSql = onConflictUpdateWhereSql,
-                SqlBulkCopyOptions = bulkCopyOptions ?? SqlBulkCopyOptions.Default
+                BulkCopyOptions = bulkCopyOptions ?? BulkCopyOptions.Default
             }
         };
         const string nameText = nameof(Item.Name);

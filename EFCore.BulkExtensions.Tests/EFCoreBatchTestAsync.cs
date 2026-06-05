@@ -1,15 +1,13 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBatchTestAsync : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBatchTestAsync
 {
     protected static int EntitiesNumber => 1000;
 

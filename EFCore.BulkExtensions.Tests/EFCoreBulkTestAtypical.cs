@@ -5,11 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkTestAtypical
 {
     protected static int EntitiesNumber => 1000;
 
@@ -107,8 +106,16 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
         for (int i = 1; i <= 4; i++)
         {
             int j = i;
-            if (i == 1) j = 2;
-            if (i == 2) j = 1;
+            if (i == 1)
+            {
+                j = 2;
+            }
+
+            if (i == 2)
+            {
+                j = 1;
+            }
+
             entities.Add(new Item
             {
                 Name = "name " + j,
@@ -406,7 +413,9 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
 
             var conn = context.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open)
+            {
                 conn.Open();
+            }
 
             using var command = conn.CreateCommand();
             command.CommandText = $"SELECT TOP 1 * FROM {nameof(Info)} ORDER BY {nameof(Info.InfoId)} DESC";
@@ -953,7 +962,7 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
 
         var bulkConfigBase = new BulkConfig
         {
-            SqlBulkCopyOptions = Microsoft.Data.SqlClient.SqlBulkCopyOptions.KeepIdentity, // OPTION 1. - to ensure insert order is kept the same since SqlBulkCopy does not guarantee it.
+            BulkCopyOptions = BulkCopyOptions.KeepIdentity, // OPTION 1. - to ensure insert order is kept the same since SqlBulkCopy does not guarantee it.
             PropertiesToInclude = new List<string>
                 {
                     nameof(LogPersonReport.LogId),

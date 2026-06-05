@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\EFCore.BulkExtensions.props" />
+
+  <PropertyGroup>
+    <AssemblyName>EFCore.BulkExtensions.PostgreSql</AssemblyName>
+    <PackageId>EFCore.BulkExtensions.MIT.PostgreSql</PackageId>
+    <Title>EFCore.BulkExtensions.MIT.PostgreSql</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\EFCore.BulkExtensions.Abstractions\EFCore.BulkExtensions.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\EFCoreBulk.png" Pack="True" PackagePath="" />
+    <None Include="..\..\README.md" Pack="True" PackagePath="" />
+    <Content Include="..\..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE" />
+  </ItemGroup>
+
+  <Import Project="..\..\targets\Npgsql.EntityFrameworkCore.PostgreSQL.targets" />
+
+</Project>

@@ -4,11 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTestSaveChanges : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkTestSaveChanges
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

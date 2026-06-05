@@ -1,12 +1,9 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 
@@ -72,7 +69,7 @@ public class Issue547DbContext : DbContext
     }
 }
 
-public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class Issue547 : IDisposable
 {
 
     [Theory(Skip = "Throws: System.Data.SqlTypes.SqlNullValueException : Data is Null. This method or property cannot be called on Null values.")]

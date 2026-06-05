@@ -1,4 +1,4 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using EFCore.BulkExtensions.Tests.IncludeGraph.Model;
 using EFCore.BulkExtensions.Tests.ShadowProperties;
 using Microsoft.EntityFrameworkCore;
@@ -6,11 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 
-public class IncludeGraphTests : IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class IncludeGraphTests : IDisposable
 {
     private readonly static WorkOrder WorkOrder1 = new ()
     {

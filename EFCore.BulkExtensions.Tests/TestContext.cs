@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text.Json;
 
 namespace EFCore.BulkExtensions.Tests;
@@ -223,7 +222,7 @@ public static class ContextUtil
 
     public static DbContextOptions GetOptions<TDbContext>(IEnumerable<IInterceptor>? dbInterceptors = null, string databaseName = nameof(EFCoreBulkTest))
         where TDbContext : DbContext
-        => GetOptions<TDbContext>(ContextUtil.DbServer, dbInterceptors, databaseName);
+        => GetOptions<TDbContext>(DbServer, dbInterceptors, databaseName);
 
     public static DbContextOptions GetOptions<TDbContext>(DbServerType dbServerType, IEnumerable<IInterceptor>? dbInterceptors = null, string databaseName = nameof(EFCoreBulkTest))
         where TDbContext : DbContext
@@ -277,14 +276,7 @@ public static class ContextUtil
         return optionsBuilder.Options;
     }
 
-    private static IConfiguration GetConfiguration()
-    {
-        var configBuilder = new ConfigurationBuilder()
-            .AddJsonFile("testsettings.json", optional: false)
-            .AddJsonFile("testsettings.local.json", optional: true);
-
-        return configBuilder.Build();
-    }
+    private static IConfiguration GetConfiguration() => TestSettingsConfiguration.Instance;
 
     public static string GetSqlServerConnectionString(string databaseName)
     {
@@ -293,7 +285,7 @@ public static class ContextUtil
 
     public static string GetSqliteConnectionString(string databaseName)
     {
-        return GetConfiguration().GetConnectionString("Sqlite")!.Replace("{databaseName}", databaseName);
+        return TestSettingsConfiguration.GetConnectionString("Sqlite", databaseName);
     }
 
     public static string GetPostgreSqlConnectionString(string databaseName)
@@ -525,7 +517,7 @@ public class Box
     public int BoxId { get; set; }
 
     [NotMapped] // used only for Postgres so mapped wiht FluentAPI 
-    public System.Text.Json.JsonElement ElementContent { get; set; }
+    public JsonElement ElementContent { get; set; }
 
     [NotMapped] // used only for Postgres so mapped wiht FluentAPI 
     public JsonDocument DocumentContent { get; set; } = null!;

@@ -1,13 +1,12 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.ValueConverters;
 
-public class ValueConverterTests: IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class ValueConverterTests: IDisposable
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

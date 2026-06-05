@@ -6,11 +6,10 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdateTests.DatabaseFixture>
 {
     private readonly DatabaseFixture _dbFixture;
 

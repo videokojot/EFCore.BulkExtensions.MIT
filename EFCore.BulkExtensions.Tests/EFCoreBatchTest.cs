@@ -5,11 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBatchTest
 {
     protected static int EntitiesNumber => 1000;
 

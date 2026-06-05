@@ -40,7 +40,12 @@ public class DbAssemblyFixture : IDisposable
     {
         if (!_fixtureRequested)
         {
-            throw new InvalidOperationException("Fixture would not be disposed - mark test with: IAssemblyFixture<DbAssemblyFixture>");
+            throw new InvalidOperationException("Fixture was not created - ensure [assembly: AssemblyFixture(typeof(DbAssemblyFixture))] is present.");
+        }
+
+        if (TestSettingsConfiguration.UseLocalDatabases)
+        {
+            return GetLocalConnectionString(dbServerType, databaseName);
         }
 
         lock (_locker)
@@ -116,4 +121,48 @@ public class DbAssemblyFixture : IDisposable
     }
 
     private static readonly object _locker = new();
+
+    private static string GetLocalConnectionString(DbServerType dbServerType, string databaseName)
+    {
+        var connectionString = dbServerType switch
+        {
+            DbServerType.SQLServer => TestSettingsConfiguration.GetConnectionString("SqlServer", databaseName),
+            DbServerType.PostgreSQL => TestSettingsConfiguration.GetConnectionString("PostgreSql", databaseName),
+            DbServerType.MySQL => TestSettingsConfiguration.GetConnectionString("MySql", databaseName),
+            _ => throw new ArgumentOutOfRangeException(nameof(dbServerType), dbServerType, null),
+        };
+
+        if (dbServerType == DbServerType.PostgreSQL)
+        {
+            connectionString += ";Include Error Detail=True";
+        }
+
+        if (dbServerType == DbServerType.MySQL)
+        {
+            EnsureMySqlLocalInfileEnabled(connectionString);
+        }
+
+        return connectionString;
+    }
+
+    private static void EnsureMySqlLocalInfileEnabled(string connectionString)
+    {
+        lock (_locker)
+        {
+            if (_mySqlLocalInfileConfigured)
+            {
+                return;
+            }
+
+            var builder = new MySqlConnectionStringBuilder(connectionString) { Database = string.Empty };
+            using var connection = new MySqlConnection(builder.ConnectionString);
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SET GLOBAL local_infile = true;";
+            command.ExecuteNonQuery();
+            _mySqlLocalInfileConfigured = true;
+        }
+    }
+
+    private static bool _mySqlLocalInfileConfigured;
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +9,7 @@ public class VcDbContext : DbContext
 {
     public VcDbContext([NotNull] DbContextOptions options) : base(options)
     {
-        this.Database.EnsureCreated();
+        Database.EnsureCreated();
     }
 
     public DbSet<VcModel> VcModels { get; set; } = null!;

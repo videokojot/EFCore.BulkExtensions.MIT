@@ -4,11 +4,10 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class BulkInsertTests : IClassFixture<BulkInsertTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class BulkInsertTests : IClassFixture<BulkInsertTests.DatabaseFixture>
 {
     private readonly DatabaseFixture _dbFixture;
 

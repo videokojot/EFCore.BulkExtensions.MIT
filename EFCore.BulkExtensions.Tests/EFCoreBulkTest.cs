@@ -3,19 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Caching.Memory;
-using Npgsql;
-using NpgsqlTypes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTest : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkTest
 {
     protected static int EntitiesNumber => 10000;
 
@@ -536,7 +533,7 @@ public class EFCoreBulkTest : IAssemblyFixture<DbAssemblyFixture>
         }
         if (isBulk)
         {
-            var bulkConfig = new BulkConfig { SetOutputIdentity = true, CalculateStats = true, SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity};
+            var bulkConfig = new BulkConfig { SetOutputIdentity = true, CalculateStats = true, BulkCopyOptions = BulkCopyOptions.KeepIdentity};
             context.BulkInsertOrUpdate(entities, bulkConfig, (a) => WriteProgress(a));
             if (dbServer == DbServerType.SQLServer)
             {
