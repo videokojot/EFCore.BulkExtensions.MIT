@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkUnderlyingTest : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkUnderlyingTest
 {
     protected static int EntitiesNumber => 1000;
 

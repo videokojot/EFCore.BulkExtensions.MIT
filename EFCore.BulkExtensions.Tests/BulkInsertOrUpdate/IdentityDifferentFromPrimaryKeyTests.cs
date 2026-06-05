@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDifferentFromPrimaryKeyTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDifferentFromPrimaryKeyTests.DatabaseFixture>
 {
     public class DatabaseFixture : BulkDbTestsFixture<IdentityDifferentFromPkDbContext>
     {

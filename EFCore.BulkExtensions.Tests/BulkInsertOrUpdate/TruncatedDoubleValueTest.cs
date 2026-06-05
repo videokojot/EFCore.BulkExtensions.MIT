@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class TruncatedDoubleValueTest : IClassFixture<TruncatedDoubleValueTest.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class TruncatedDoubleValueTest : IClassFixture<TruncatedDoubleValueTest.DatabaseFixture>
 {
     private readonly DatabaseFixture _dbFixture;
 

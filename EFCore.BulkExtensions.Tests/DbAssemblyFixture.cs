@@ -40,7 +40,7 @@ public class DbAssemblyFixture : IDisposable
     {
         if (!_fixtureRequested)
         {
-            throw new InvalidOperationException("Fixture would not be disposed - mark test with: IAssemblyFixture<DbAssemblyFixture>");
+            throw new InvalidOperationException("Fixture was not created - ensure [assembly: AssemblyFixture(typeof(DbAssemblyFixture))] is present.");
         }
 
         if (TestSettingsConfiguration.UseLocalDatabases)

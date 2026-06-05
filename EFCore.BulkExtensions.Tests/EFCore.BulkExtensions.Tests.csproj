@@ -7,14 +7,12 @@
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CA2007;EF1002;CS0105</NoWarn>
+    <!-- xUnit v3 test projects are stand-alone executables -->
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <DefineConstants>$(DefineConstants);V8</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <DefineConstants>$(DefineConstants);V9</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
@@ -49,7 +47,7 @@
   <Import Project="..\targets\Testcontainers.MsSql.targets" />
   <Import Project="..\targets\Testcontainers.PostgreSql.targets" />
   <Import Project="..\targets\Testcontainers.MySql.targets" />
-  <Import Project="..\targets\xunit.assemblyfixture.targets" />
+  <Import Project="..\targets\xunit.v3.targets" />
   <Import Project="..\targets\xunit.runner.visualstudio.targets" />
 
 </Project>

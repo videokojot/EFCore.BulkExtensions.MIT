@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTestSaveChanges : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkTestSaveChanges
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

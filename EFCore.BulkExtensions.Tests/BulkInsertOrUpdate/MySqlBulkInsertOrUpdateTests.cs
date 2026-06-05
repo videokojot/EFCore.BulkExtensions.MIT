@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
-public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdateTests.DatabaseFixture>, IAssemblyFixture<DbAssemblyFixture>
+public class MySqlBulkInsertOrUpdateTests : IClassFixture<MySqlBulkInsertOrUpdateTests.DatabaseFixture>
 {
     private readonly DatabaseFixture _dbFixture;
 

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.ShadowProperties;
 
-public class ShadowPropertyTests : IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class ShadowPropertyTests : IDisposable
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

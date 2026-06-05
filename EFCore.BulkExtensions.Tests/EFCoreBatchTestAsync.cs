@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBatchTestAsync : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBatchTestAsync
 {
     protected static int EntitiesNumber => 1000;
 

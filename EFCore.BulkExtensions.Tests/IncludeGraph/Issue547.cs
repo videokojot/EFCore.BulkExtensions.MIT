@@ -69,7 +69,7 @@ public class Issue547DbContext : DbContext
     }
 }
 
-public class Issue547 : IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class Issue547 : IDisposable
 {
 
     [Theory(Skip = "Throws: System.Data.SqlTypes.SqlNullValueException : Data is Null. This method or property cannot be called on Null values.")]

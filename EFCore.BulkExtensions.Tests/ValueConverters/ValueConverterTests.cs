@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests.ValueConverters;
 
-public class ValueConverterTests: IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class ValueConverterTests: IDisposable
 {
     [Theory]
     [InlineData(DbServerType.SQLServer)]

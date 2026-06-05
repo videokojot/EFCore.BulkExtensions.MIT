@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBulkTestAsync : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBulkTestAsync
 {
     protected static int EntitiesNumber => 10000;
 

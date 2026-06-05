@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace EFCore.BulkExtensions.Tests;
 
-public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
+public class EFCoreBatchTest
 {
     protected static int EntitiesNumber => 1000;
 

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 
-public class IncludeGraphTests : IDisposable, IAssemblyFixture<DbAssemblyFixture>
+public class IncludeGraphTests : IDisposable
 {
     private readonly static WorkOrder WorkOrder1 = new ()
     {
