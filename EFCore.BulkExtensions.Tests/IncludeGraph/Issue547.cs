@@ -1,12 +1,9 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.IncludeGraph;
 

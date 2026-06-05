@@ -1,9 +1,8 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
+using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.ShadowProperties;
 

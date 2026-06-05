@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project>
+
+  <PropertyGroup>
+    <!-- Supporting only current LTS https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core -->
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>EFCore.BulkExtensions</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NeutralLanguage>en</NeutralLanguage>
+    <NoWarn>$(NoWarn);CS1591;CA2255</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package metadata">
+    <Version>11.0.0</Version>
+    <AssemblyVersion>11.0.0.0</AssemblyVersion>
+    <FileVersion>11.0.0.0</FileVersion>
+    <Authors>borisdj, Jindrich Cincibuch</Authors>
+    <Description>EntityFramework EF Core Bulk Batch Extensions for Insert Update Delete Read (CRUD) operations on SQL Server, PostgreSQL, MySQL, SQLite</Description>
+    <PackageProjectUrl>https://github.com/videokojot/EFCore.BulkExtensions.MIT</PackageProjectUrl>
+    <PackageIcon>EFCoreBulk.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>EntityFrameworkCore Entity Framework Core EFCore EF Core SQL Server PostgreSQL MySQL SQLite Bulk Batch Extensions Insert Update Delete Read Truncate SaveChanges</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/videokojot/EFCore.BulkExtensions.MIT</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageOutputPath>..\..\dist</PackageOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <EnvironmentName>Development</EnvironmentName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <EnvironmentName>Production</EnvironmentName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="bin\**" />
+    <Compile Remove="obj\**" />
+    <Compile Remove="TestResults\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <EmbeddedResource Remove="TestResults\**" />
+    <None Remove="bin\**" />
+    <None Remove="obj\**" />
+    <None Remove="TestResults\**" />
+  </ItemGroup>
+
+</Project>

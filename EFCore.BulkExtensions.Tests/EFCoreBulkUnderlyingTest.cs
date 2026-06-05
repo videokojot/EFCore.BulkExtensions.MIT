@@ -6,7 +6,6 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
@@ -149,12 +148,20 @@ public class EFCoreBulkUnderlyingTest : IAssemblyFixture<DbAssemblyFixture>
 
     public static DbConnection GetUnderlyingConnection(DbConnection connection)
     {
-        if (connection is MyConnection mc) return mc.UnderlyingConection;
+        if (connection is MyConnection mc)
+        {
+            return mc.UnderlyingConection;
+        }
+
         return connection;
     }
     public static DbTransaction GetUnderlyingTransaction(DbTransaction transaction)
     {
-        if (transaction is MyTransaction mt) return mt.UnderlyingTransaction;
+        if (transaction is MyTransaction mt)
+        {
+            return mt.UnderlyingTransaction;
+        }
+
         return transaction;
     }
 }
@@ -258,7 +265,7 @@ class MyCommand : DbCommand
     public override UpdateRowSource UpdatedRowSource { get => UnderlyingCommand.UpdatedRowSource; set => UnderlyingCommand.UpdatedRowSource = value; }
     protected override DbConnection? DbConnection { get => MyConnection; set => MyConnection = (MyConnection?)value; }
 
-    protected override DbParameterCollection DbParameterCollection => this.UnderlyingCommand.Parameters;
+    protected override DbParameterCollection DbParameterCollection => UnderlyingCommand.Parameters;
 
     public MyTransaction? MyTransaction { get; set; }
 

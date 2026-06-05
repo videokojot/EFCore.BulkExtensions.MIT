@@ -1,4 +1,4 @@
-﻿namespace EFCore.BulkExtensions.Tests.ValueConverters;
+namespace EFCore.BulkExtensions.Tests.ValueConverters;
 
 public class VcModel
 {
@@ -20,9 +20,9 @@ public readonly struct LocalDate
 {
     public LocalDate(int year, int month, int day)
     {
-        this.Year = year;
-        this.Month = month;
-        this.Day = day;
+        Year = year;
+        Month = month;
+        Day = day;
     }
 
     public readonly int Year;

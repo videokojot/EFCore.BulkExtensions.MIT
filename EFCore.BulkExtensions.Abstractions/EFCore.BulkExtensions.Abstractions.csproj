@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\EFCore.BulkExtensions.props" />
+
+  <PropertyGroup>
+    <AssemblyName>EFCore.BulkExtensions.Abstractions</AssemblyName>
+    <PackageId>EFCore.BulkExtensions.MIT.Abstractions</PackageId>
+    <Title>EFCore.BulkExtensions.MIT.Abstractions</Title>
+    <PackageOutputPath>..\dist</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\EFCoreBulk.png" Pack="True" PackagePath="" />
+    <None Include="..\README.md" Pack="True" PackagePath="" />
+    <Content Include="..\LICENSE" Link="LICENSE" Pack="true" PackagePath="LICENSE" />
+  </ItemGroup>
+
+  <Import Project="..\targets\MedallionTopologicalSort.targets" />
+  <Import Project="..\targets\Microsoft.EntityFrameworkCore.Relational.targets" />
+
+</Project>

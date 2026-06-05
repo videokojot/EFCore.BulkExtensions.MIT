@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
-using Xunit;
+using EFCore.BulkExtensions.SqlAdapters;
 
 namespace EFCore.BulkExtensions.Tests.BatchUtil;
 

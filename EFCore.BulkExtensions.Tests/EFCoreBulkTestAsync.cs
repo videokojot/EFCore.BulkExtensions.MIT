@@ -2,14 +2,12 @@ using EFCore.BulkExtensions.SqlAdapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
 
@@ -222,7 +220,7 @@ public class EFCoreBulkTestAsync : IAssemblyFixture<DbAssemblyFixture>
         }
         if (isBulk)
         {
-            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true, SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity};
+            var bulkConfig = new BulkConfig() { SetOutputIdentity = true, CalculateStats = true, BulkCopyOptions = BulkCopyOptions.KeepIdentity};
             await context.BulkInsertOrUpdateAsync(entities, bulkConfig);
             if (dbServer == DbServerType.SQLServer)
             {

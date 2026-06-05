@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project>
+
+  <ItemGroup Condition="$(MSBuildProjectName.Contains('v10'))">
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!$(MSBuildProjectName.Contains('v10'))">
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
+  </ItemGroup>
+
+</Project>

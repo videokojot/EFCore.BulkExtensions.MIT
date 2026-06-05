@@ -5,7 +5,6 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using Xunit;
 
 namespace EFCore.BulkExtensions.Tests.BulkInsertOrUpdate;
 
@@ -49,7 +48,7 @@ public class IdentityDifferentFromPrimaryKeyTests : IClassFixture<IdentityDiffer
         {
             var items = new[] { item, item2 };
 
-            db.BulkInsertOrUpdateOrDelete(items, c => { c.SqlBulkCopyOptions = SqlBulkCopyOptions.Default | SqlBulkCopyOptions.KeepIdentity; });
+            db.BulkInsertOrUpdateOrDelete(items, c => { c.BulkCopyOptions = BulkCopyOptions.Default | BulkCopyOptions.KeepIdentity; });
         }
 
         using (var db = _dbFixture.GetDb(dbType))
