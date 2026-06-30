@@ -96,7 +96,7 @@ public class TableInfo
     /// <summary>
     /// Creates an instance of TableInfo
     /// </summary>
-    public static TableInfo CreateInstance<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig)
+    public static TableInfo CreateInstance<T>(DbContext context, Type? type, ICollection<T> entities, OperationType operationType, BulkConfig? bulkConfig)
     {
         var tableInfo = new TableInfo
         {
@@ -124,14 +124,14 @@ public class TableInfo
     /// <summary>
     /// Configures the table info based on entity data 
     /// </summary>
-    public void LoadData<T>(DbContext context, Type? type, IList<T> entities, bool loadOnlyPKColumn)
+    public void LoadData<T>(DbContext context, Type? type, ICollection<T> entities, bool loadOnlyPKColumn)
 
     {
         LoadOnlyPKColumn = loadOnlyPKColumn;
         var entityType = type is null ? null : context.Model.FindEntityType(type);
         if (entityType == null)
         {
-            type = entities[0]?.GetType() ?? throw new ArgumentNullException(nameof(type));
+            type = entities.FirstOrDefault()?.GetType() ?? throw new ArgumentNullException(nameof(type));
             entityType = context.Model.FindEntityType(type);
             HasAbstractList = true;
         }
@@ -729,7 +729,7 @@ public class TableInfo
         return previousPropertyColumnNamesDict;
     }
 
-    internal void UpdateReadEntities<T>(IList<T> entities, IList<T> existingEntities, DbContext context)
+    internal void UpdateReadEntities<T>(ICollection<T> entities, ICollection<T> existingEntities, DbContext context)
     {
         List<string> propertyNames = PropertyColumnNamesDict.Keys.ToList();
         if (HasOwnedTypes)
@@ -757,14 +757,14 @@ public class TableInfo
 
         for (int i = 0; i < NumberOfEntities; i++)
         {
-            T entity = entities[i];
+            T entity = entities.ElementAt(i);
             string uniqueProperyValues = GetUniquePropertyValues(entity!, selectByPropertyNames, FastPropertyDict);
 
             existingEntitiesDict.TryGetValue(uniqueProperyValues, out T? existingEntity);
             bool isPostgreSQL = context.Database.ProviderName?.EndsWith(DbServerType.PostgreSQL.ToString()) ?? false;
             if (existingEntity == null && isPostgreSQL && i < existingEntities.Count)
             {
-                existingEntity = existingEntities[i]; // TODO check if BinaryImport with COPY on Postgres preserves order
+                existingEntity = existingEntities.ElementAt(i); // TODO check if BinaryImport with COPY on Postgres preserves order
             }
             if (existingEntity != null)
             {
@@ -785,7 +785,7 @@ public class TableInfo
         }
     }
 
-    internal void ReplaceReadEntities<T>(IList<T> entities, IList<T> existingEntities)
+    internal void ReplaceReadEntities<T>(ICollection<T> entities, ICollection<T> existingEntities)
     {
         entities.Clear();
 
@@ -799,7 +799,7 @@ public class TableInfo
     /// <summary>
     /// Sets the identity preserve order
     /// </summary>
-    public void CheckToSetIdentityForPreserveOrder<T>(TableInfo tableInfo, IList<T> entities, bool reset = false)
+    public void CheckToSetIdentityForPreserveOrder<T>(TableInfo tableInfo, ICollection<T> entities, bool reset = false)
     {
         string identityPropertyName = PropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key;
 
@@ -813,7 +813,7 @@ public class TableInfo
         {
             if (operationType == OperationType.Insert) // Insert should either have all zeros for automatic order, or they can be manually set
             {
-                var propertyValue = FastPropertyDict[identityPropertyName].Get(entities[0]!);
+                var propertyValue = FastPropertyDict[identityPropertyName].Get(entities.ElementAt(0)!);
                 var identityValue = Convert.ToInt64(IdentityColumnConverter != null ? IdentityColumnConverter.ConvertToProvider(propertyValue) : propertyValue);
 
                 if (identityValue != 0) // (to check it fast, condition for all 0s is only done on first one)
@@ -902,7 +902,7 @@ public class TableInfo
     /// <summary>
     /// Updates the entities' identity field
     /// </summary>
-    internal void UpdateEntitiesIdentity<T>(TableInfo tableInfo, IList<T> entities, IList<object> entitiesWithOutputIdentity)
+    internal void UpdateEntitiesIdentity<T>(TableInfo tableInfo, ICollection<T> entities, ICollection<object> entitiesWithOutputIdentity)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
                                                                 : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                               // or PK with default sql value
@@ -939,7 +939,9 @@ public class TableInfo
 
             if (tableInfo.EntitiesSortedReference != null)
             {
-                entities = tableInfo.EntitiesSortedReference.Cast<T>().ToList();
+                // When PreserveInsertOrder sorting was applied we replace iteration source with sorted reference
+                var sorted = tableInfo.EntitiesSortedReference.Cast<T>().ToList();
+                entities = sorted;
             }
             
             
@@ -1011,17 +1013,23 @@ public class TableInfo
             entities.Clear();
             if (typeof(T) == entitiesWithOutputIdentity.FirstOrDefault()?.GetType())
             {
-                ((List<T>)entities).AddRange(entitiesWithOutputIdentity.Cast<T>().ToList());
+                foreach (var e in entitiesWithOutputIdentity.Cast<T>())
+                {
+                    entities.Add(e);
+                }
             }
             else
             {
-                var entitiesObjects = entities.Cast<object>().ToList();
-                entitiesObjects.AddRange(entitiesWithOutputIdentity);
+                foreach (var obj in entitiesWithOutputIdentity)
+                {
+                    if (obj is T t)
+                        entities.Add(t);
+                }
             }
         }
     }
 
-    internal void UpdateEntitiesIdentityByMap<T>(TableInfo tableInfo, IList<T> entities, List<IndexToGeneratedId> indexToGeneratedIds)
+    internal void UpdateEntitiesIdentityByMap<T>(TableInfo tableInfo, ICollection<T> entities, System.Collections.Generic.List<IndexToGeneratedId> indexToGeneratedIds)
     {
         var identifierPropertyName = IdentityColumnName != null ? OutputPropertyColumnNamesDict.SingleOrDefault(a => a.Value == IdentityColumnName).Key // it Identity autoincrement 
                                          : PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key;                                                      // or PK with default sql value
@@ -1037,7 +1045,7 @@ public class TableInfo
             // In case of setting output identity, we cannot decide which id we should use (as there might be multiple rows in output table, which 'belong' to only one row in source table).
                 
             var customPk = tableInfo.PrimaryKeysPropertyColumnNameDict.Keys;
-            var nonUniqueEntities = mappingDictionary.Where(x => x.Value.Count > 1).Select(x => x.Key).Select(x => entities[x]).ToList();
+            var nonUniqueEntities = mappingDictionary.Where(x => x.Value.Count > 1).Select(x => x.Key).Select(index => entities.ElementAt(index)).ToList();
 
             var nonUniqueKeys = nonUniqueEntities.Select(x => new PrimaryKeysPropertyColumnNameValues(customPk.Select(c => FastPropertyDict[c].Get(x!)))).ToList();
                 
@@ -1049,7 +1057,7 @@ public class TableInfo
 
         for (int index = 0; index < NumberOfEntities; index++)
         {
-            T entityToBeFilled = entities[index]!;
+            T entityToBeFilled = entities.ElementAt(index)!;
 
             if (!mappingDictionary.TryGetValue(index, out var  mapping))
             {
@@ -1084,7 +1092,7 @@ public class TableInfo
     // https://github.com/aspnet/EntityFrameworkCore/issues/12905
     #region CompiledQuery
 
-    public async Task LoadOutputDataAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken) where T : class
+    public async Task LoadOutputDataAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, bool isAsync, CancellationToken cancellationToken) where T : class
     {
         bool hasIdentity = OutputPropertyColumnNamesDict.Any(a => a.Value == IdentityColumnName) ||
                            (tableInfo.HasSinglePrimaryKey && tableInfo.DefaultValueProperties.Contains(tableInfo.PrimaryKeysPropertyColumnNameDict.FirstOrDefault().Key));
@@ -1301,7 +1309,7 @@ public class TableInfo
         }
     }
 
-    public async Task UpdateOutputIdentityAsync<T>(DbContext context, IList<T> entities) where T : class
+    public async Task UpdateOutputIdentityAsync<T>(DbContext context, ICollection<T> entities) where T : class
     {
         if (HasSinglePrimaryKey)
         {

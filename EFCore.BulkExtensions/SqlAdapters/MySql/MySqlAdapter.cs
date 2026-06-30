@@ -20,20 +20,20 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <inheritdoc/>
     #region Methods
     // Insert
-    public void Insert<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress)
+    public void Insert<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, Action<decimal>? progress)
     {
         InsertAsync(context, type, entities, tableInfo, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
-    public async Task InsertAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress,
+    public async Task InsertAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, Action<decimal>? progress,
         CancellationToken cancellationToken)
     {
         await InsertAsync(context, type, entities, tableInfo, progress, isAsync: false, CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    protected static async Task InsertAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo,
+    protected static async Task InsertAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo,
         Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
     {
         tableInfo.CheckToSetIdentityForPreserveOrder(tableInfo, entities);
@@ -80,21 +80,21 @@ public class MySqlAdapter : ISqlOperationsAdapter
         }
     }
     /// <inheritdoc/>
-    public void Merge<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType,
+    public void Merge<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, OperationType operationType,
         Action<decimal>? progress) where T : class
     {
         MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc/>
-    public async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, OperationType operationType,
+    public async Task MergeAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, OperationType operationType,
         Action<decimal>? progress, CancellationToken cancellationToken) where T : class
     {
         await MergeAsync(context, type, entities, tableInfo, operationType, progress, isAsync: true, CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    protected async Task MergeAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo,
+    protected async Task MergeAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo,
         OperationType operationType, Action<decimal>? progress, bool isAsync, CancellationToken cancellationToken)
         where T : class
     {
@@ -265,13 +265,13 @@ public class MySqlAdapter : ISqlOperationsAdapter
         
     }
     /// <inheritdoc/>
-    public void Read<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress) where T : class
+    public void Read<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, Action<decimal>? progress) where T : class
     {
         throw new NotImplementedException();
     }
 
     /// <inheritdoc/>
-    public Task ReadAsync<T>(DbContext context, Type type, IList<T> entities, TableInfo tableInfo, Action<decimal>? progress,
+    public Task ReadAsync<T>(DbContext context, Type type, ICollection<T> entities, TableInfo tableInfo, Action<decimal>? progress,
         CancellationToken cancellationToken) where T : class
     {
         throw new NotImplementedException();
@@ -337,7 +337,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
     #endregion
     
     #region DataTable
-    public static DataTable GetDataTable<T>(DbContext context, Type type, IList<T> entities, MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
+    public static DataTable GetDataTable<T>(DbContext context, Type type, ICollection<T> entities, MySqlBulkCopy mySqlBulkCopy, TableInfo tableInfo)
     {
         DataTable dataTable = InnerGetDataTable(context, ref type, entities, tableInfo);
 
@@ -353,7 +353,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
     /// <summary>
     /// Common logic for two versions of GetDataTable
     /// </summary>
-    private static DataTable InnerGetDataTable<T>(DbContext context, ref Type type, IList<T> entities, TableInfo tableInfo)
+    private static DataTable InnerGetDataTable<T>(DbContext context, ref Type type, ICollection<T> entities, TableInfo tableInfo)
     {
         var dataTable = new DataTable();
         var columnsDict = new Dictionary<string, object?>();
@@ -363,7 +363,7 @@ public class MySqlAdapter : ISqlOperationsAdapter
         var isMySql = databaseType == DbServerType.MySQL;
         
         var objectIdentifier = tableInfo.ObjectIdentifier;
-        type = tableInfo.HasAbstractList ? entities[0]!.GetType() : type;
+        type = tableInfo.HasAbstractList ? entities.First()!.GetType() : type;
         var entityType = context.Model.FindEntityType(type) ?? throw new ArgumentException($"Unable to determine entity type from given type - {type.Name}");
         var entityTypeProperties = entityType.GetProperties();
         var entityPropertiesDict = entityTypeProperties.Where(a => tableInfo.PropertyColumnNamesDict.ContainsKey(a.Name) ||
