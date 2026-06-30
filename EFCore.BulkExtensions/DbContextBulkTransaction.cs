@@ -1,7 +1,7 @@
-﻿using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,11 +9,14 @@ namespace EFCore.BulkExtensions;
 
 internal static class DbContextBulkTransaction
 {
-    public static void Execute<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig, Action<decimal>? progress) where T : class
+    public static void Execute<T>(DbContext context, Type? type, ICollection<T> entities, OperationType operationType, BulkConfig? bulkConfig, Action<decimal>? progress) where T : class
     {
         type ??= typeof(T);
 
         CheckForMySQLUnsupportedFeatures(context, operationType, bulkConfig);
+
+        // Ensure we have an IList<T> for downstream operations that rely on indexing
+        IList<T> entitiesList = entities as IList<T> ?? entities.ToList();
 
         using (ActivitySources.StartExecuteActivity(operationType, entities.Count))
         {
@@ -38,15 +41,15 @@ internal static class DbContextBulkTransaction
             }
             else
             {
-                TableInfo tableInfo = TableInfo.CreateInstance(context, type, entities, operationType, bulkConfig);
+                TableInfo tableInfo = TableInfo.CreateInstance(context, type, entitiesList, operationType, bulkConfig);
 
                 if (operationType == OperationType.Insert && !tableInfo.BulkConfig.SetOutputIdentity && tableInfo.BulkConfig.CustomSourceTableName == null)
                 {
-                    SqlBulkOperation.Insert(context, type, entities, tableInfo, progress);
+                    SqlBulkOperation.Insert(context, type, entitiesList, tableInfo, progress);
                 }
                 else if (operationType == OperationType.Read)
                 {
-                    SqlBulkOperation.Read(context, type, entities, tableInfo, progress);
+                    SqlBulkOperation.Read(context, type, entitiesList, tableInfo, progress);
                 }
                 else if (operationType == OperationType.Truncate)
                 {
@@ -54,7 +57,7 @@ internal static class DbContextBulkTransaction
                 }
                 else
                 {
-                    SqlBulkOperation.Merge(context, type, entities, tableInfo, operationType, progress);
+                    SqlBulkOperation.Merge(context, type, entitiesList, tableInfo, operationType, progress);
                 }
             }
         }
@@ -81,9 +84,12 @@ internal static class DbContextBulkTransaction
         // }
     }
 
-    public static async Task ExecuteAsync<T>(DbContext context, Type? type, IList<T> entities, OperationType operationType, BulkConfig? bulkConfig, Action<decimal>? progress, CancellationToken cancellationToken = default) where T : class
+    public static async Task ExecuteAsync<T>(DbContext context, Type? type, ICollection<T> entities, OperationType operationType, BulkConfig? bulkConfig, Action<decimal>? progress, CancellationToken cancellationToken = default) where T : class
     {
         type ??= typeof(T);
+
+        // Ensure we have an IList<T> for downstream operations that rely on indexing
+        IList<T> entitiesList = entities as IList<T> ?? entities.ToList();
 
         using (ActivitySources.StartExecuteActivity(operationType, entities.Count))
         {
@@ -102,15 +108,15 @@ internal static class DbContextBulkTransaction
             }
             else
             {
-                TableInfo tableInfo = TableInfo.CreateInstance(context, type, entities, operationType, bulkConfig);
+                TableInfo tableInfo = TableInfo.CreateInstance(context, type, entitiesList, operationType, bulkConfig);
 
                 if (operationType == OperationType.Insert && !tableInfo.BulkConfig.SetOutputIdentity)
                 {
-                    await SqlBulkOperation.InsertAsync(context, type, entities, tableInfo, progress, cancellationToken).ConfigureAwait(false);
+                    await SqlBulkOperation.InsertAsync(context, type, entitiesList, tableInfo, progress, cancellationToken).ConfigureAwait(false);
                 }
                 else if (operationType == OperationType.Read)
                 {
-                    await SqlBulkOperation.ReadAsync(context, type, entities, tableInfo, progress, cancellationToken).ConfigureAwait(false);
+                    await SqlBulkOperation.ReadAsync(context, type, entitiesList, tableInfo, progress, cancellationToken).ConfigureAwait(false);
                 }
                 else if (operationType == OperationType.Truncate)
                 {
@@ -118,7 +124,7 @@ internal static class DbContextBulkTransaction
                 }
                 else
                 {
-                    await SqlBulkOperation.MergeAsync(context, type, entities, tableInfo, operationType, progress, cancellationToken).ConfigureAwait(false);
+                    await SqlBulkOperation.MergeAsync(context, type, entitiesList, tableInfo, operationType, progress, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
