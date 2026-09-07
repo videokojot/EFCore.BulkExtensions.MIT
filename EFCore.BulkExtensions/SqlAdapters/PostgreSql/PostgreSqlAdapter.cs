@@ -220,7 +220,9 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
         (bool hasUniqueConstrain, bool connectionOpenedInternally) = await CheckHasExplicitUniqueConstrainAsync(context, tableInfo, isAsync, cancellationToken).ConfigureAwait(false);
         if (hasUniqueConstrain == false)
         {
-            if (tableInfo.EntityPKPropertyColumnNameDict == tableInfo.PrimaryKeysPropertyColumnNameDict)
+            if (tableInfo.EntityPKPropertyColumnNameDict
+                    .OrderBy(k => k.Key)
+                    .SequenceEqual(tableInfo.PrimaryKeysPropertyColumnNameDict.OrderBy(k => k.Key)))
             {
                 hasUniqueConstrain = true; // ExplicitUniqueConstrain not required for PK
             }
