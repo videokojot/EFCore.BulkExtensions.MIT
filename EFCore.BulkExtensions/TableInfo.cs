@@ -179,7 +179,7 @@ public class TableInfo
             BulkConfig.UseTempDB = false;
         }
 
-        TempSchema = sourceSchema ?? Schema;
+        TempSchema = BulkConfig.UseTempDB ? null : (sourceSchema ?? Schema);
         TempTableSufix = sourceTableName != null ? "" : "Temp";
         if (BulkConfig.UniqueTableNameTempDb)
         {
