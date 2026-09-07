@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using EFCore.BulkExtensions.SqlAdapters.PostgreSql;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace EFCore.BulkExtensions.Tests;
@@ -50,6 +53,27 @@ public class SqlQueryBuilderPostgreSqlTests
         Assert.Equal(expected, actual);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TableInfoTempSchemaFollowsUseTempDb(bool useTempDb)
+    {
+        var options = new DbContextOptionsBuilder<SchemaTestContext>()
+            .UseNpgsql("Host=unused")
+            .Options;
+        using var context = new SchemaTestContext(options);
+        var tableInfo = new TableInfo
+        {
+            EscL = "\"",
+            EscR = "\"",
+            BulkConfig = new BulkConfig { UseTempDB = useTempDb }
+        };
+
+        tableInfo.LoadData(context, typeof(SchemaTestEntity), new List<SchemaTestEntity> { new() }, false);
+
+        Assert.Equal(useTempDb ? null : "dw", tableInfo.TempSchema);
+    }
+
     private TableInfo GetTestTableInfo(Func<string, string, string>? onConflictUpdateWhereSql = null)
     {
         var tableInfo = new TableInfo()
@@ -77,5 +101,21 @@ public class SqlQueryBuilderPostgreSqlTests
         tableInfo.PropertyColumnNamesUpdateDict = tableInfo.PropertyColumnNamesDict;
 
         return tableInfo;
+    }
+
+    private sealed class SchemaTestContext : DbContext
+    {
+        public SchemaTestContext(DbContextOptions<SchemaTestContext> options) : base(options)
+        {
+        }
+
+        public DbSet<SchemaTestEntity> Entities => Set<SchemaTestEntity>();
+    }
+
+    [Table("SchemaTestEntity", Schema = "dw")]
+    private sealed class SchemaTestEntity
+    {
+        [Key]
+        public int Id { get; set; }
     }
 }
