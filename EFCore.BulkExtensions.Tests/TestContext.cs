@@ -32,6 +32,7 @@ public class TestContext : DbContext
     public DbSet<Box> Boxes { get; set; } = null!;
     public DbSet<Person> Persons { get; set; } = null!;
     public DbSet<Student> Students { get; set; } = null!;
+    public DbSet<Instructor> Instructors { get; set; } = null!;
     public DbSet<Teacher> Teachers { get; set; } = null!;
     public DbSet<Entry> Entries { get; set; } = null!;
     public DbSet<EntryArchive> EntryArchives { get; set; } = null!;
@@ -433,6 +434,18 @@ public enum WallType
 public class Student : Person
 {
     public string Subject { get; set; } = null!;
+}
+
+// Not mapped as an entity type of its own: EF parents Instructor directly to Person, so a List<StaffMember>
+// passed to a bulk operation has an element type that is absent from the model.
+public abstract class StaffMember : Person
+{
+    public string Department { get; set; } = null!;
+}
+
+public class Instructor : StaffMember
+{
+    public string Course { get; set; } = null!;
 }
 
 // To Test custom Destination and Source tables
