@@ -57,6 +57,13 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
                 : tableInfo.PropertyColumnNamesDict.Where(a => a.Value != tableInfo.IdentityColumnName);
 
             var propertiesNames = propertiesColumnDict.Select(a => a.Key).ToList();
+            // A TPH discriminator is a shadow property with no CLR accessor, so GetPropertyValue returns null for it.
+            // T can be an unmapped intermediate base (e.g. an abstract class between the root and the mapped subtypes),
+            // so fall back to the first entity's runtime type.
+            var discriminatorEntityType = context.Model.FindEntityType(typeof(T))
+                ?? (entities.Count > 0 && entities[0] is not null ? context.Model.FindEntityType(entities[0]!.GetType()) : null);
+            var discriminatorPropertyName = discriminatorEntityType?.FindDiscriminatorProperty()?.Name;
+
             var entitiesCopiedCount = 0;
             foreach (var entity in entities)
             {
@@ -78,7 +85,9 @@ public class PostgreSqlAdapter : ISqlOperationsAdapter
                         continue;
                     }
 
-                    var propertyValue = GetPropertyValue(tableInfo, propertyName, entity);
+                    var propertyValue = propertyName == discriminatorPropertyName
+                        ? context.Model.FindEntityType(entity!.GetType())?.GetDiscriminatorValue()
+                        : GetPropertyValue(tableInfo, propertyName, entity);
                     var propertyColumnName = tableInfo.PropertyColumnNamesDict.ContainsKey(propertyName) ? tableInfo.PropertyColumnNamesDict[propertyName] : string.Empty;
                     var columnType = tableInfo.ColumnNamesTypesDict[propertyColumnName];
 

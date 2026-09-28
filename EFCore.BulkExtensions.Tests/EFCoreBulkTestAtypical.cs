@@ -328,6 +328,7 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
     [Theory]
     [InlineData(DbServerType.SQLServer)]
     [InlineData(DbServerType.SQLite)]
+    [InlineData(DbServerType.PostgreSQL)]
     private void DiscriminatorShadowTest(DbServerType dbServer)
     {
         ContextUtil.DbServer = dbServer;
@@ -368,6 +369,36 @@ public class EFCoreBulkTestAtypical : IAssemblyFixture<DbAssemblyFixture>
         // TEST
         var entities = context.Students.ToList();
         Assert.Equal(EntitiesNumber, entities.Count);
+    }
+
+    [Theory]
+    [InlineData(DbServerType.PostgreSQL)]
+    private void DiscriminatorShadowUntrackedTest(DbServerType dbServer)
+    {
+        ContextUtil.DbServer = dbServer;
+        using var context = new TestContext(ContextUtil.GetOptions());
+
+        context.BulkDelete(context.Persons.ToList());
+
+        // Never added to the context, so EF has not set the shadow 'Discriminator' on any of these
+        var students = new List<Student>();
+        for (int i = 1; i <= EntitiesNumber; i++)
+        {
+            students.Add(new Student { Name = "student " + i, Subject = "Math" });
+        }
+        context.BulkInsert(students);
+
+        // Element type is StaffMember, which EF does not map, so the discriminator has to come from each entity's runtime type
+        var staff = new List<StaffMember>();
+        for (int i = 1; i <= EntitiesNumber; i++)
+        {
+            staff.Add(new Instructor { Name = "instructor " + i, Department = "Physics", Course = "Mechanics" });
+        }
+        context.BulkInsert(staff);
+
+        Assert.Equal(EntitiesNumber, context.Students.Count());
+        Assert.Equal(EntitiesNumber, context.Instructors.Count());
+        Assert.Equal(EntitiesNumber * 2, context.Persons.Count());
     }
 
     [Theory]
