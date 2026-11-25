@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.2" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite" Version="11.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.HierarchyId" Version="11.0.0" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.5" />
+      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="11.0.100" />
+    </ItemGroup>
+</Project>

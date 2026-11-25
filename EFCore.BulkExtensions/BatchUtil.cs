@@ -146,7 +146,7 @@ public static class BatchUtil
             {
                 dynamic npgsqlParam = SqlAdaptersMapping.DbServer(context).QueryBuilder.CreateParameter((SqlParameter)param);
 
-                string paramName = npgsqlParam.ParameterName.Replace("@", "");
+                string paramName = ((string)npgsqlParam.ParameterName).Replace("@param_", "").Replace("@", "");
                 var propertyType = type.GetProperties().SingleOrDefault(a => a.Name == paramName)?.PropertyType;
                 if (propertyType == typeof(System.Text.Json.JsonElement) || propertyType == typeof(System.Text.Json.JsonElement?)) // for JsonDocument works without fix
                 {
@@ -308,8 +308,8 @@ public static class BatchUtil
                 bool updateColumnExplicit = updateColumns != null && updateColumns.Contains(propertyName);
                 if (isDifferentFromDefault || updateColumnExplicit)
                 {
-                    sql += $"[{columnName}] = @{columnName}, ";
-                    var parameterName = $"@{columnName}";
+                    sql += $"[{columnName}] = @param_{columnName}, "; // "param_" prefix: SQL Server parameter names are case-insensitive, so a plain "@Price" would clash with a query parameter "@price" (EF Core 11)
+                    var parameterName = $"@param_{columnName}";
                     IDbDataParameter? param = TryCreateRelationalMappingParameter(
                         columnName,
                         parameterName,
@@ -322,7 +322,7 @@ public static class BatchUtil
 
                         param = new SqlParameter
                         {
-                            ParameterName = $"@{columnName}",
+                            ParameterName = $"@param_{columnName}",
                             Value = propertyUpdateValue
                         };
                         if (!isDifferentFromDefault && propertyUpdateValue == DBNull.Value

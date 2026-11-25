@@ -67,6 +67,24 @@ updates:
           - "minor"
           - "patch"
 
+  # EF Core v11 projects
+  - package-ecosystem: "nuget"
+    directory: "/NugetProjects/EFCore.BulkExtensions.v11*"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "videokojot"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      efcore-v11-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # Directory.Build.props
   - package-ecosystem: "nuget"
     directory: "/NugetProjects"
