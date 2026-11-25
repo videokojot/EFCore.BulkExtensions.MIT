@@ -17,6 +17,10 @@
         <DefineConstants>$(DefineConstants);V10</DefineConstants>
     </PropertyGroup>
 
+    <PropertyGroup Condition="$(MSBuildProjectName.Contains('v11'))">
+        <DefineConstants>$(DefineConstants);V11</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="xunit.assemblyfixture" Version="2.2.0"/>
 

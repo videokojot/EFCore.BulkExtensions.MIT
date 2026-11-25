@@ -53,6 +53,15 @@
                 <FileVersion>10.$(BaseVersion).0</FileVersion>
             </PropertyGroup>
         </When>
+        <When Condition="$(MSBuildProjectName.Contains('v11'))">
+            <PropertyGroup>
+                <Version>11.$(BaseVersion)</Version>
+                <TargetFramework>net11.0</TargetFramework>
+                <DefineConstants>$(DefineConstants);V11</DefineConstants>
+                <AssemblyVersion>11.$(BaseVersion).0</AssemblyVersion>
+                <FileVersion>11.$(BaseVersion).0</FileVersion>
+            </PropertyGroup>
+        </When>
         <Otherwise>
         </Otherwise>
     </Choose>

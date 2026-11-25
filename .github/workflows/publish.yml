@@ -38,6 +38,7 @@ jobs:
             8.x
             9.x
             10.x
+            11.x
           
       # Create the NuGet package in the folder from the environment variable NuGetDirectory
       - run: dotnet pack --configuration Release --output ${{ env.NuGetDirectory }}
@@ -85,6 +86,7 @@ jobs:
             8.x
             9.x
             10.x
+            11.x
       - name: Run tests
         run: dotnet test --configuration Release
   
@@ -114,6 +116,7 @@ jobs:
             8.x
             9.x
             10.x
+            11.x
       - name: Tag commit v8
         uses: EndBug/latest-tag@latest
         with:
@@ -126,6 +129,10 @@ jobs:
         uses: EndBug/latest-tag@latest
         with:
           ref: "10.${{ github.event.release.tag_name }}"
+      - name: Tag commit v11
+        uses: EndBug/latest-tag@latest
+        with:
+          ref: "11.${{ github.event.release.tag_name }}"
 
       # Publish all NuGet packages to NuGet.org
       # Use --skip-duplicate to prevent errors if a package with the same version already exists.

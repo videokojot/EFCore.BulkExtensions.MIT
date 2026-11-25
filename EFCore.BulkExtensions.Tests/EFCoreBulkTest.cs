@@ -220,7 +220,11 @@ public class EFCoreBulkTest : IAssemblyFixture<DbAssemblyFixture>
         //query.BatchUpdate(a => new Item { Name = a.Name + suffix, Quantity = a.Quantity + incrementStep }); // example of BatchUpdate Increment/Decrement value in variable
     }
     
+#if V11
+    [Theory(Skip = "Pomelo.EntityFrameworkCore.MySql has no EF Core 11 release yet")]
+#else
     [Theory]
+#endif
     [InlineData(DbServerType.MySQL)]
     public void InsertTestMySQL(DbServerType dbServer)
     {

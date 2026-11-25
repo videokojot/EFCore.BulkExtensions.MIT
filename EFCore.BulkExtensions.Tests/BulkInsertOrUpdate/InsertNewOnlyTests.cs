@@ -21,7 +21,9 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     [Theory]
     [InlineData(DbServerType.SQLServer)]
     [InlineData(DbServerType.PostgreSQL)]
+#if !V11
     [InlineData(DbServerType.MySQL)]
+#endif
     public void BulkInsertOrUpdate_InsertNewOnly(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();
@@ -94,7 +96,9 @@ public class InsertNewOnlyTests : IClassFixture<InsertNewOnlyTests.DatabaseFixtu
     [InlineData(DbServerType.SQLServer)]
     // [InlineData(DbServerType.PostgreSQL)] 
     // PostgreSQL is ignored due to unfixed bug. See: https://github.com/videokojot/EFCore.BulkExtensions.MIT/issues/110
+#if !V11
     [InlineData(DbServerType.MySQL)]
+#endif
     public void BulkInsertOrUpdate_InsertNewOnly_ByColumns(DbServerType dbType)
     {
         var bulkId = Guid.NewGuid();

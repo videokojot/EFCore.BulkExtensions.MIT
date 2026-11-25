@@ -1,11 +1,10 @@
-using EFCore.BulkExtensions.SqlAdapters;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Xunit;
+using EFCore.BulkExtensions.SqlAdapters;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCore.BulkExtensions.Tests;
 
@@ -153,7 +152,7 @@ public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
             query.Take(1).BatchUpdate(a => new Item { Name = a.Name + " TOP(1)", Quantity = a.Quantity + incrementStep }); // example of BatchUpdate with TOP(1)
         }
     }
-    
+
     private static void RunBatchUpdateEnum()
     {
         using var context = new TestContext(ContextUtil.GetOptions());
@@ -191,15 +190,20 @@ public class EFCoreBatchTest : IAssemblyFixture<DbAssemblyFixture>
             .BatchUpdate(parent => new Parent { Description = parent.Details.Notes ?? "Fallback" });
 
         var actualSqlExecuted = testDbCommandInterceptor.ExecutedNonQueryCommands?.LastOrDefault()?.Sql;
-            
-var   expectedSql =
-@"UPDATE p SET  [p].[Description] = (
+
+        var expectedSql =
+        @"UPDATE p SET  [p].[Description] = (
     SELECT COALESCE([p1].[Notes], N'Fallback')
     FROM [ParentDetail] AS [p1]
     WHERE [p1].[ParentId] = [p].[ParentId]) 
 FROM [Parent] AS [p]
 LEFT JOIN [ParentDetail] AS [p0] ON [p].[ParentId] = [p0].[ParentId]
 WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE N''";
+
+#if V11
+        // EF Core 11 translates '??' to ISNULL on SQL Server
+        expectedSql = expectedSql.Replace("COALESCE([p1].[Notes]", "ISNULL([p1].[Notes]");
+#endif
 
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
 
@@ -213,7 +217,7 @@ WHERE [p].[ParentId] < 5 AND [p0].[Notes] IS NOT NULL AND [p0].[Notes] NOT LIKE 
     FROM [Child] AS [c]
     WHERE [p].[ParentId] = [c].[ParentId] AND [c].[IsEnabled] = CAST(1 AS bit)) 
 FROM [Parent] AS [p]
-WHERE [p].[ParentId] = 1";   
+WHERE [p].[ParentId] = 1";
 
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
 
@@ -230,7 +234,7 @@ WHERE [p].[ParentId] = 1";
         expectedSql = "unknown dotnet version";
 
 #if V8
-                expectedSql =
+        expectedSql =
 @"UPDATE p SET  [p].[Description] = (CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
     FROM [Child] AS [c]
@@ -239,8 +243,8 @@ FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
 
-#if V9 || V10
-                expectedSql =
+#if V9 || V10 || V11
+        expectedSql =
 @"UPDATE p SET  [p].[Description] = (COALESCE(CONVERT(varchar(100), (
     SELECT COALESCE(SUM([c].[Value]), 0.0)
     FROM [Child] AS [c]
@@ -248,8 +252,13 @@ WHERE [p].[ParentId] = 1";
 FROM [Parent] AS [p]
 WHERE [p].[ParentId] = 1";
 #endif
-        
- Console.WriteLine(actualSqlExecuted);
+
+#if V11
+        // EF Core 11 names this parameter @p instead of @__p_0
+        expectedSql = expectedSql.Replace("@__p_0", "@p");
+#endif
+
+        Console.WriteLine(actualSqlExecuted);
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), actualSqlExecuted?.Replace("\r\n", "\n"));
     }
 

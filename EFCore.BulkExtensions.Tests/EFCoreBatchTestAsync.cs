@@ -69,9 +69,13 @@ public class EFCoreBatchTestAsync : IAssemblyFixture<DbAssemblyFixture>
             .ConfigureAwait(false);
 
         var executedCommand = dbCommandInterceptor.ExecutedNonQueryCommands.Last();
+        var oldPhoneNumberParameterName = "@__oldPhoneNumber_0";
+#if V11
+        oldPhoneNumberParameterName = "@oldPhoneNumber"; // EF Core 11 names parameters after the variable
+#endif
         Assert.Equal(2, executedCommand.DbParameters.Count);
 
-        var oldPhoneNumberParameter = (Microsoft.Data.SqlClient.SqlParameter)executedCommand.DbParameters.Single(param => param.ParameterName == "@__oldPhoneNumber_0");
+        var oldPhoneNumberParameter = (Microsoft.Data.SqlClient.SqlParameter)executedCommand.DbParameters.Single(param => param.ParameterName == oldPhoneNumberParameterName);
         Assert.Equal(System.Data.DbType.AnsiString, oldPhoneNumberParameter.DbType);
         Assert.Equal(System.Data.SqlDbType.VarChar, oldPhoneNumberParameter.SqlDbType);
 
@@ -84,6 +88,7 @@ public class EFCoreBatchTestAsync : IAssemblyFixture<DbAssemblyFixture>
 FROM [Parent] AS [p]
 WHERE [p].[PhoneNumber] = @__oldPhoneNumber_0";
 
+        expectedSql = expectedSql.Replace("@__oldPhoneNumber_0", oldPhoneNumberParameterName);
         Assert.Equal(expectedSql.Replace("\r\n", "\n"), executedCommand.Sql.Replace("\r\n", "\n"));
     }
 
